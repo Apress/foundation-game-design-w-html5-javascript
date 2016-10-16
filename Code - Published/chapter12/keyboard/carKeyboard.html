@@ -1,0 +1,263 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Car</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+//*** Note: this spriteObject uses an additional Boolean property called 
+//accelerate which is used to determine when the car should accelerate
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  rotation: 0,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0,
+  rotationSpeed: 0,
+  accelerate: false,
+  speed: 0,
+  speedLimit: 5, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The car
+var car = Object.create(spriteObject);
+car.sourceX = 64;
+car.x = canvas.width / 2 - car.halfWidth();
+car.y = canvas.height / 2 - car.halfHeight();
+sprites.push(car);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/vehicles.png";
+assetsToLoad.push(image);
+
+//Add listeners
+window.addEventListener("keydown", keydownHandler, false);
+window.addEventListener("keyup", keyupHandler, false);
+
+//The angle between the mouse and the center of the car
+var angle = undefined;
+
+//Arrow key codes
+var UP = 38;
+var RIGHT = 39;
+var LEFT = 37;
+
+//Car actions
+var rotateLeft = false;
+var rotateRight = false;
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function keydownHandler(event)
+{
+	switch (event.keyCode) 
+  {
+    case LEFT: 
+      rotateLeft = true;
+      break;
+		
+    case RIGHT: 
+      rotateRight = true;
+      break;
+		
+    case UP:
+      car.accelerate = true;
+  }
+}
+
+function keyupHandler(event)
+{
+	switch (event.keyCode) 
+  {
+    case LEFT: 
+      rotateLeft = false;
+      break;
+		
+    case RIGHT: 
+      rotateRight = false;
+      break;
+		
+    case UP: 
+      car.accelerate = false;
+  }
+}
+
+function playGame()
+{ 
+  //Rotate left
+  if(rotateLeft && !rotateRight)
+  {
+    car.rotationSpeed = -3; 
+  }
+  //Rotate right
+  if(rotateRight && !rotateLeft)
+  {
+    car.rotationSpeed = 3; 
+  }
+  //Stop the car from rotating if no arrow keys are press
+  if(!rotateRight && !rotateLeft)
+  {
+    car.rotationSpeed = 0; 
+  }
+  
+  //Accelerate the car if the space key is pressed
+	if(car.accelerate)
+	{
+	  //Increase the car's speed if it's under the speed limit
+	  if(car.speed < car.speedLimit)
+	  {
+		  car.speed += 0.1;
+		}
+		//Add some optional drag
+		//car.speed *= car.friction; 
+	}
+	else
+	{
+		//Add friction to the speed if the car is 
+		//not accelerating
+		car.speed *= car.friction; 
+	}
+	
+	//Calculate the acceleration based on the angle of rotation
+	angle = car.rotation  * (Math.PI / 180); 
+	
+	car.accelerationX = car.speed * Math.cos(angle); 
+	car.accelerationY = car.speed * Math.sin(angle);
+	
+	//Update the car's velocity
+	car.vx = car.accelerationX; 
+	car.vy = car.accelerationY;
+	
+	//Move and rotate the car
+	car.x += car.vx;
+	car.y += car.vy;
+	car.rotation += car.rotationSpeed;
+}
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	    var sprite = sprites[i];
+	     
+	    //Save the current state of the drawing surface
+	    //before it's rotated
+	    drawingSurface.save();
+	  
+      //Rotate the canvas
+    	drawingSurface.translate
+    	(
+    	  Math.floor(sprite.x + sprite.halfWidth()), 
+    	  Math.floor(sprite.y + sprite.halfHeight())
+    	);
+	    drawingSurface.rotate(sprite.rotation * Math.PI / 180);
+    
+	    if(sprite.visible)
+	    {
+		    drawingSurface.drawImage
+		    (
+		      image, 
+		      sprite.sourceX, sprite.sourceY, 
+		      sprite.sourceWidth, sprite.sourceHeight,
+		      Math.floor(-sprite.halfWidth()), Math.floor(-sprite.halfHeight()), 
+		      sprite.width, sprite.height
+		    );
+	    }
+	     
+      //Restore the drawing surface to its 
+      //state before it was rotated
+      drawingSurface.restore();
+	  }
+  }
+}
+
+</script>

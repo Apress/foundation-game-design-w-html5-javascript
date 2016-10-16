@@ -1,0 +1,49 @@
+<!doctype html>
+<title>Random numbers</title>
+
+<script>
+
+var randomVariable
+
+//A random number between 0 and 1
+
+randomVariable = Math.random();
+console.log(randomVariable);
+
+//Randomly find 0 or 1 for a random 50% 
+//chance of something happening
+
+var rainToday;
+
+if(Math.round(Math.random()) === 1)
+{
+	rainToday = true;
+	console.log("It's going to rain.");
+}
+	else
+ {
+	rainToday = false;
+	console.log("No rain today.");
+}
+
+//A random number between 0 and 99
+
+randomVariable = Math.floor(Math.random() * 100);
+console.log("0 - 99: " + randomVariable);
+
+//A random number between 1 and 100
+
+randomVariable = Math.ceil(Math.random() * 100);
+console.log("1 - 100: " + randomVariable);
+
+//A random number between 1 and 10
+
+randomVariable = Math.ceil(Math.random() * 10);
+console.log("1 - 10: " + randomVariable);
+
+//A random number between 10 and 25
+
+randomVariable = Math.floor(Math.random() * 16) + 10;
+console.log("10 - 25: " + randomVariable);
+
+</script>

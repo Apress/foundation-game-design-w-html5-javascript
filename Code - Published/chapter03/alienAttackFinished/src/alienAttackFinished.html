@@ -1,0 +1,198 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Alien Attack</title>
+<link rel="stylesheet" href="alienAttack.css">
+
+<section id="game">
+
+<h1>Alien Attack!</h1>
+
+<div id="stage">
+  <div id="background"></div>
+  <div id="cannon"></div>
+  <div id="missile"></div>
+  <div id="alien"></div>
+  <div id="explosion"></div>
+</div>
+
+<p id="output">Enter the X and Y position (0-300), then click fire.</p>
+<input id="inputX" type="text" placeholder="X…" autofocus> 
+<input id="inputY" type="text" placeholder="Y…"> 
+<button>fire!</button>
+
+</section>
+	
+<script>
+
+//Game variables
+var alienX = Math.floor(Math.random() * 280);
+var alienY = 20;
+var guessX = 0;
+var guessY = 0;
+var shotsRemaining = 8;
+var shotsMade = 0;
+var gameState = "";
+var gameWon = false;
+
+//The game objects
+var cannon = document.querySelector("#cannon");
+var alien = document.querySelector("#alien");
+var missile = document.querySelector("#missile");
+var explosion = document.querySelector("#explosion");
+
+//The input and output fields
+var inputX = document.querySelector("#inputX");
+var inputY = document.querySelector("#inputY");
+var output = document.querySelector("#output");
+
+//The button
+var button = document.querySelector("button");
+button.style.cursor = "pointer";
+button.addEventListener("click", clickHandler, false);
+
+//Listen for enter key presses
+window.addEventListener("keydown", keydownHandler, false);
+
+function clickHandler()
+{
+  validateInput();
+}
+
+function keydownHandler(event)
+{
+  if(event.keyCode === 13)
+  {
+    validateInput();
+  }
+}
+
+function validateInput()
+{
+  guessX = parseInt(inputX.value);
+  guessY = parseInt(inputY.value);
+  
+  if(isNaN(guessX) || isNaN(guessY) )
+  {
+    output.innerHTML = "Please enter a number.";
+  }
+  else if(guessX > 300 || guessY > 300)
+  {
+    output.innerHTML = "Please enter a number less than 300.";
+  }
+  else
+  {
+    playGame();
+  }
+}
+
+function render()
+{
+  //Position the alien
+  alien.style.left = alienX + "px";
+  alien.style.top = alienY + "px";
+  
+  //Position the cannon
+  cannon.style.left = guessX + "px";
+  
+  //Position the missile
+  missile.style.left = guessX + "px";
+  missile.style.top = guessY + "px";
+  
+  //display the explosion and hide the 
+  //alien if it's been destroyed
+  if(gameWon)
+  {
+    //Display the explosion
+    explosion.style.display = "block";
+    explosion.style.left = alienX + "px";
+    explosion.style.top = alienY + "px";
+    
+    //Hide the alien
+    alien.style.display = "none";
+    
+    //Hide the missile
+    missile.style.display = "none";
+  }
+}
+
+
+function playGame()
+{
+  shotsRemaining = shotsRemaining - 1;
+  shotsMade = shotsMade + 1;
+  gameState 
+    = " Shots: " + shotsMade + ", Remaining: " + shotsRemaining;
+  
+  //Find out whether the player's x and y guesses are inside
+  //The alien's area
+  
+  if(guessX >= alienX && guessX <= alienX + 20)
+  {
+     //Yes, it's within the X range, so now let's
+     //check the Y range
+     
+     if(guessY >= alienY  && guessY <= alienY + 20)
+     {
+       //It's in both the X and Y range, so it's a hit!
+       gameWon = true;
+       endGame();
+     }
+  }
+  else
+  {
+    output.innerHTML = "Miss!" + "<br>" + gameState;
+    
+    //Check for the end of the game
+    if (shotsRemaining < 1)
+    {
+      endGame();
+    }
+  }
+  
+  //Update the alien's position if the
+  //game hasn't yet been won
+  
+  if(!gameWon)
+  {
+    //Update the alien's X position
+    alienX = Math.floor(Math.random() * 281);
+    
+    //Add 30 to the new Y position so that
+    //the alien moves down
+    alienY += 30;
+  } 
+  
+  //Render the new game state
+  render();
+  console.log("X: " + alienX);
+  console.log("Y: " + alienY);
+}
+
+function endGame()
+{
+  if(gameWon)
+  {
+    output.innerHTML
+      = "Hit! You saved the earth!" + "<br>" 
+      + "It only took you " + shotsMade + " shots.";
+  }
+  else
+  {
+    output.innerHTML
+      = "You lost!" + "<br>" 
+      + "The earth has been invaded!";
+  }
+  
+  //Disable the button
+  button.removeEventListener("click", clickHandler, false);
+  button.disabled = true;
+  
+  //Disable the enter key
+  window.removeEventListener("keydown", keydownHandler, false);
+  
+  //Disable the input fields
+  inputX.disabled = true;
+  inputY.disabled = true;
+}
+	
+</script>

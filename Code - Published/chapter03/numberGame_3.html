@@ -1,0 +1,83 @@
+<!doctype html>
+<title>Number guessing game</title>
+
+<p id="output">I am thinking of a number between 0 and 99.</p>
+<input id="input" type="text" placeholder="Enter your guess…"> 
+<button>guess</button>
+	
+<script>
+
+//Game variables
+var mysteryNumber = 50;
+var playersGuess = 0;
+var guessesRemaining = 10;
+var guessesMade = 0;
+var gameState = "";
+var gameWon = false;
+
+//The input and output fields
+var input = document.querySelector("#input");
+var output = document.querySelector("#output");
+
+//The button
+var button = document.querySelector("button");
+button.style.cursor = "pointer";
+button.addEventListener("click", clickHandler, false);
+
+function clickHandler()
+{
+  playGame();
+}
+
+function playGame()
+{
+  guessesRemaining = guessesRemaining - 1;
+  guessesMade = guessesMade + 1;
+  gameState = " Guess: " + guessesMade + ", Remaining: " + guessesRemaining;
+  
+  playersGuess = parseInt(input.value);
+
+  if(playersGuess > mysteryNumber)
+  {
+    output.innerHTML = "That's too high." + gameState;
+    
+    //Check for the end of the game
+    if (guessesRemaining < 1)
+    {
+      endGame();
+    }
+  }
+  else if(playersGuess < mysteryNumber)
+  {
+    output.innerHTML = "That's too low." + gameState;
+    
+    //Check for the end of the game
+    if (guessesRemaining < 1)
+    {
+      endGame();
+    }
+  }
+  else if(playersGuess === mysteryNumber)
+  {
+    gameWon = true;
+    endGame();
+  }
+}
+
+function endGame()
+{
+  if (gameWon)
+  {
+    output.innerHTML
+      = "Yes, it's " + mysteryNumber + "!" + "<br>" 
+      + "It only took you " + guessesMade + " guesses.";
+  }
+  else
+  {
+    output.innerHTML
+      = "No more guesses left!" + "<br>" 
+      + "The number was: " + mysteryNumber + ".";
+  }
+}
+	
+</script>

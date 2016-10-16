@@ -1,0 +1,459 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Rectangle bounce</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Platform game properties   
+  isOnGround: undefined,
+  jumpForce: -10,
+
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//Create the box 
+var box = Object.create(spriteObject);
+box.x = 350;
+box.y = 100;
+box.width = 100;
+box.height = 100;
+sprites.push(box);
+
+//Create the cat
+var cat = Object.create(spriteObject);
+cat.sourceX = 64;
+cat.x = 150;
+cat.y = 250;
+sprites.push(cat);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "catAndBox.png";
+assetsToLoad.push(image);
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+//Arrow key codes
+var UP = 38;
+var DOWN = 40;
+var RIGHT = 39;
+var LEFT = 37;
+
+//Directions
+var moveUp = false;
+var moveDown = false;
+var moveRight = false;
+var moveLeft = false;
+
+//Add keyboard listeners
+window.addEventListener("keydown", function(event)
+{
+  switch(event.keyCode)
+  {
+    case UP:
+	    moveUp = true;
+	    break;
+	  
+	  case DOWN:
+	    moveDown = true;
+	    break;
+	    
+	  case LEFT:
+	    moveLeft = true;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = true;
+	    break; 
+  }
+}, false);
+
+window.addEventListener("keyup", function(event)
+{
+  switch(event.keyCode)
+  {
+    case UP:
+	    moveUp = false;
+	    break;
+	  
+	  case DOWN:
+	    moveDown = false;
+	    break;
+	    
+	  case LEFT:
+	    moveLeft = false;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = false;
+	    break; 
+  }
+}, false);
+
+update();
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function playGame()
+{ 
+  //Set the cat's acceleration if the keys are being pressed
+  //Up
+  if(moveUp && !moveDown)
+  {
+    cat.accelerationY = -0.2;
+    cat.friction = 1;
+  }
+  //Down
+  if(moveDown && !moveUp)
+  {
+    cat.accelerationY = 0.2;
+    cat.friction = 1;
+  }
+  //Left
+  if(moveLeft && !moveRight)
+  {
+    cat.accelerationX = -0.2;
+    cat.friction = 1;
+  }
+  //Right
+  if(moveRight && !moveLeft)
+  {
+    cat.accelerationX = 0.2;
+    cat.friction = 1;
+  }
+  
+  //Set the cat's acceleration and friction to zero if none of the keys are being pressed
+  if(!moveUp && !moveDown)
+  {
+    cat.accelerationY = 0;
+  }
+  if(!moveLeft && !moveRight)
+  {
+    cat.accelerationX = 0; 
+  }
+  if(!moveUp && !moveDown && !moveLeft && !moveRight)
+  {
+    cat.friction = 0.96; 
+  }
+  	
+  //Apply the acceleration
+  cat.vx += cat.accelerationX; 
+  cat.vy += cat.accelerationY;
+  
+  //Apply friction
+  cat.vx *= cat.friction; 
+  cat.vy *= cat.friction;
+
+  //Move the cat
+  cat.x += cat.vx;
+  cat.y += cat.vy;
+  
+  //Bounce the objects
+  blockRectangle(cat, box, true);
+  
+  //Bounce off the screen edges
+  //Left
+  if(cat.x < 0)
+  {
+    cat.vx *= cat.bounce;
+    cat.x = 0;
+  }
+  //Up
+  if(cat.y < 0)
+  {
+    cat.vy *= cat.bounce;
+    cat.y = 0;
+  }
+  //Right
+  if(cat.x + cat.width > canvas.width)
+  {
+    cat.vx *= cat.bounce;
+    cat.x = canvas.width - cat.width;
+  }
+  //Down
+  if(cat.y + cat.height > canvas.height)
+  {
+    cat.vy *= cat.bounce;
+    cat.y = canvas.height - cat.height;
+  }
+}
+
+function blockRectangle(r1, r2, bounce)
+{
+  //Set bounce to a default value of false if it's not specified
+  if(typeof bounce === "undefined")
+  {
+    bounce = false;
+  }
+  
+  //A variable to tell us which side the 
+  //collision is occurring on
+  var collisionSide = "";
+  
+  //Calculate the distance vector
+  var vx = r1.centerX() - r2.centerX();
+  var vy = r1.centerY() - r2.centerY();
+  
+  //Figure out the combined half-widths and half-heights
+  var combinedHalfWidths = r1.halfWidth() + r2.halfWidth();
+  var combinedHalfHeights = r1.halfHeight() + r2.halfHeight();
+    
+  //Check whether vx is less than the combined half widths 
+  if(Math.abs(vx) < combinedHalfWidths) 
+  {
+    //A collision might be occurring! 
+    //Check whether vy is less than the combined half heights 
+    if(Math.abs(vy) < combinedHalfHeights)
+    {
+      //A collision has occurred! This is good! 
+      //Find out the size of the overlap on both the X and Y axes
+      var overlapX = combinedHalfWidths - Math.abs(vx);
+      var overlapY = combinedHalfHeights - Math.abs(vy);
+        
+      //The collision has occurred on the axis with the
+      //*smallest* amount of overlap. Let's figure out which
+      //axis that is
+        
+      if(overlapX >= overlapY)
+      {
+        //The collision is happening on the X axis 
+        //But on which side? vy can tell us
+        if(vy > 0)
+        {
+          collisionSide = "top";
+            
+          //Move the rectangle out of the collision
+          r1.y = r1.y + overlapY;
+        }
+        else 
+        {
+          collisionSide = "bottom";
+          
+          //Move the rectangle out of the collision
+          r1.y = r1.y - overlapY;
+        }
+    
+        //Bounce
+        if(bounce)
+        {
+          r1.vy *= -1;
+		      
+          /*Alternative
+          //Find the bounce surface's vx and vy properties
+          var s = {};
+          s.vx = r2.x - r2.x + r2.width; 
+          s.vy = 0;
+		    
+          //Bounce r1 off the surface
+          //bounceOffSurface(r1, s);
+          */
+        }
+      } 
+      else 
+      {
+        //The collision is happening on the Y axis 
+        //But on which side? vx can tell us
+        if(vx > 0)
+        {
+          collisionSide = "left";
+            
+          //Move the rectangle out of the collision
+          r1.x = r1.x + overlapX;
+        }
+        else 
+        {
+          collisionSide = "right";
+            
+          //Move the rectangle out of the collision
+          r1.x = r1.x - overlapX;
+        }
+        
+        //Bounce
+        if(bounce)
+        {
+          r1.vx *= -1;
+			    
+          /*Alternative
+          //Find the bounce surface's vx and vy properties
+          var s = {};
+          s.vx = 0; 
+          s.vy = r2.y - r2.y + r2.height;
+			    
+          //Bounce r1 off the surface
+          bounceOffSurface(r1, s);
+          */
+        }
+      } 
+    }
+    else 
+    {
+      //No collision
+      collisionSide = "none";
+    }
+  } 
+  else 
+  {
+    //No collision
+    collisionSide = "none";
+  }
+  
+  return collisionSide;
+}
+
+//An optional function (not used in this example)
+function bounceOffSurface(o, s)
+{
+  //1. Calculate the collision surface's properties
+  
+  //Find the surface vector's left normal
+  s.lx = s.vy; 
+  s.ly = -s.vx;
+  
+  //Find its magnitude
+  s.magnitude = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+  
+  //Find its normalized values
+  s.dx = s.vx / s.magnitude;
+  s.dy = s.vy / s.magnitude;
+  
+  //2. Bounce the object (o) off the surface (s)
+  
+  //Find the dot product between the object and the surface
+  var dp1 = o.vx * s.dx + o.vy * s.dy;
+  
+  //Project the object's velocity onto the collision surface
+  var p1Vx = dp1 * s.dx; 
+  var p1Vy = dp1 * s.dy;
+  
+  //Find the dot product of the object and the surface's left normal (s.lx and s.ly)
+  var dp2 = o.vx * (s.lx / s.magnitude) + o.vy * (s.ly / s.magnitude); 
+  
+  //Project the object's velocity onto the surface's left normal
+  var p2Vx = dp2 * (s.lx / s.magnitude);
+  var p2Vy = dp2 * (s.ly / s.magnitude);
+  
+  //Reverse the projection on the surface's left normal
+  p2Vx *= -1; 
+  p2Vy *= -1;
+  
+  //Add up the projections to create a new bounce vector
+  var bounceVx = p1Vx + p2Vx;
+  var bounceVy = p1Vy + p2Vy;
+  
+  //Assign the bounce vector to the object's velocity
+  o.vx = bounceVx; 
+  o.vy = bounceVy;
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

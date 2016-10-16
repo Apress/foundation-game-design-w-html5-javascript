@@ -1,0 +1,51 @@
+<!doctype html>
+<title>Looping through 2D arrays</title>
+
+<script>
+
+var closet =
+[
+  ["ball", "yoyo", "teddy"],
+  ["Austen", "Bronte", "Swift"],
+  ["guitar", "tabla", "flute"]
+];
+
+//Find the number of rows and columns
+var ROWS = closet.length;
+var COLUMNS = closet[0].length;
+
+//loop through each row
+for(var row = 0; row < ROWS; row++) 
+{
+  console.log("--- Array: " + row);
+	
+	//loop through each element of each row
+  for(var column = 0; column < COLUMNS; column++) 
+  {
+    //Display the row
+    console.log(closet[row][column]);
+		
+    //Display the column
+    //console.log(_collectionJar[row][column]);
+  }
+}
+
+/* The output:
+
+--- Array: 0
+ball
+tabla
+flute
+--- Array: 1
+Austen
+Bronte
+Swift
+--- Array: 2
+guitar
+tabla
+flute
+
+*/
+
+</script>
+

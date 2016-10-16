@@ -1,0 +1,418 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width = device-width, initial-scale = 1.0, user-scalable = no">
+<title>Platforms</title>
+
+<style type="text/css">
+button
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	color: #fff;
+	padding: 10px 20px;
+	border: 2px solid #000;
+	cursor: none;
+	
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;	
+	
+	background:-webkit-linear-gradient(top, #a3a3a3, #000);
+	background:-moz-linear-gradient(top, #a3a3a3, #000);
+	background: linear-gradient(top, #a3a3a3, #000);
+	
+	-webkit-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	-moz-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	
+	-webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+    
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+}
+
+button:active
+{
+  background: -webkit-linear-gradient(top, #858565, #c5c9a9);
+  background: -moz-linear-gradient(top, #858565, #c5c9a9);
+  background: linear-gradient(top, #858565, #c5c9a9);
+}
+
+#stage
+{
+  width: 550px;
+  height: 400px;
+  position: relative; 
+}
+
+canvas
+{
+  position: absolute; 
+}
+</style>
+
+<div id="stage">
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+<button id="jumpButton">Jump!</button>
+</div>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0, 
+  speedLimit: 8, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Platform game properties   
+  isOnGround: undefined,
+  jumpForce: -10,
+
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//The button
+var jumpButton = document.querySelector("#jumpButton");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//Create the box 
+var box = Object.create(spriteObject);
+box.x = 350;
+box.y = 250;
+sprites.push(box);
+
+//The cat
+var cat = Object.create(spriteObject);
+cat.sourceX = 64;
+cat.x = canvas.width / 2 - cat.halfWidth();
+cat.y = canvas.height / 2 - cat.halfHeight();
+sprites.push(cat);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/catAndBox.png";
+assetsToLoad.push(image);
+
+//Add listeners
+canvas.addEventListener("touchmove", touchmoveHandler, false);
+jumpButton.addEventListener("touchstart", touchstartHandler, false);
+
+//The touch point
+var touchX = cat.x + cat.halfWidth();
+var touchY = cat.y + cat.halfHeight();
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function touchmoveHandler(event)
+{ 
+  //Find the touch point's x and y position.
+  //Subtract the canvas's top and left offset
+  touchX = event.targetTouches[0].pageX - canvas.offsetLeft;
+  touchY = event.targetTouches[0].pageY - canvas.offsetTop;
+  event.preventDefault(); 
+}
+
+function touchstartHandler(event)
+{ 
+  if(cat.isOnGround)
+  {
+    cat.vy += cat.jumpForce;
+    cat.isOnGround = false;
+  }
+  
+  event.preventDefault(); 
+}
+
+function playGame()
+{ 
+  cat.vx = (touchX - (cat.x + cat.halfWidth())) * 0.2;
+
+  //Apply gravity
+  cat.vy += cat.gravity;
+
+  //Limit the speed
+  //Don't limit the upward speed because it will choke the jump effect.
+  if (cat.vx > cat.speedLimit)
+  {
+    cat.vx = cat.speedLimit;
+  }
+  if (cat.vx < -cat.speedLimit)
+  {
+    cat.vx = -cat.speedLimit;
+  } 
+  if (cat.vy > cat.speedLimit * 2)
+  {
+    cat.vy = cat.speedLimit * 2;
+  } 
+
+  //Move the cat
+  cat.x += cat.vx;
+  cat.y += cat.vy;
+  
+  //Check for a collision with the box
+  var collisionSide = blockRectangle(cat, box, false);
+    
+  if(collisionSide === "bottom" && cat.vy >= 0)
+  {
+    //Tell the game that the cat is on the ground if 
+    //it's standing on top of a platform
+    cat.isOnGround = true;
+		
+    //Neutralize gravity by applying its
+    //exact opposite force to the character's vy
+    cat.vy = -cat.gravity;
+  }
+  else if(collisionSide === "top" && cat.vy <= 0)
+  {
+    cat.vy = 0;
+  }
+  else if(collisionSide === "right" && cat.vx >= 0)
+  {
+    cat.vx = 0;
+  }
+  else if(collisionSide === "left" && cat.vx <= 0)
+  {
+    cat.vx = 0;
+  }
+  if(collisionSide !== "bottom" && cat.vy > 0)
+  {
+    cat.isOnGround = false;
+  }
+  
+  //Screen boundaries
+  //Left
+  if (cat.x < 0)
+  {
+    cat.x = 0;
+  }
+  //Up
+  if (cat.y < 0)
+  {
+    cat.y = 0;
+  }
+  //Right
+  if (cat.x + cat.width > canvas.width)
+  {
+    cat.x = canvas.width - cat.width;
+  }
+  //Down
+  if (cat.y + cat.height > canvas.height)
+  {
+    cat.vy = 0;
+    cat.y = canvas.height - cat.height;
+    cat.isOnGround = true;
+  }
+}
+
+function blockRectangle(r1, r2, bounce)
+{
+  //Set bounce to a default value of false if it's not specified
+  if(typeof bounce === "undefined")
+  {
+    bounce = false;
+  } 
+  
+  //A variable to tell us which side the 
+  //collision is occurring on
+  var collisionSide = "";
+  
+  //Calculate the distance vector
+  var vx = r1.centerX() - r2.centerX();
+  var vy = r1.centerY() - r2.centerY();
+  
+  //Figure out the combined half-widths and half-heights
+  var combinedHalfWidths = r1.halfWidth() + r2.halfWidth();
+  var combinedHalfHeights = r1.halfHeight() + r2.halfHeight();
+    
+  //Check whether vx is less than the combined half widths 
+  if(Math.abs(vx) < combinedHalfWidths) 
+  {
+    //A collision might be occurring! 
+    //Check whether vy is less than the combined half heights 
+    if(Math.abs(vy) < combinedHalfHeights)
+    {
+      //A collision has occurred! This is good! 
+      //Find out the size of the overlap on both the X and Y axes
+      var overlapX = combinedHalfWidths - Math.abs(vx);
+      var overlapY = combinedHalfHeights - Math.abs(vy);
+        
+      //The collision has occurred on the axis with the
+      //*smallest* amount of overlap. Let's figure out which
+      //axis that is
+        
+      if(overlapX >=  overlapY)
+      {
+        //The collision is happening on the X axis 
+        //But on which side? vy can tell us
+        if(vy > 0)
+        {
+          collisionSide = "top";
+            
+          //Move the rectangle out of the collision
+          r1.y = r1.y + overlapY;
+        }
+        else 
+        {
+          collisionSide = "bottom";
+          
+          //Move the rectangle out of the collision
+          r1.y = r1.y - overlapY;
+        }
+    
+		    //Bounce
+		    if(bounce)
+		    {
+		      r1.vy *= -1;
+		    }
+      } 
+      else 
+      {
+        //The collision is happening on the Y axis 
+        //But on which side? vx can tell us
+        if(vx > 0)
+        {
+          collisionSide = "left";
+            
+          //Move the rectangle out of the collision
+          r1.x = r1.x + overlapX;
+        }
+        else 
+        {
+          collisionSide = "right";
+            
+          //Move the rectangle out of the collision
+          r1.x = r1.x - overlapX;
+        }
+        
+        //Bounce
+        if(bounce)
+        {
+	        r1.vx *= -1;
+			  }
+      } 
+    }
+    else 
+    {
+      //No collision
+      collisionSide = "none";
+    }
+  } 
+  else 
+  {
+    //No collision
+    collisionSide = "none";
+  }
+  
+  return collisionSide;
+}
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

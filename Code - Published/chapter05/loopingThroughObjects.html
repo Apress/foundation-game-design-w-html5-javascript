@@ -1,0 +1,64 @@
+<!doctype html>
+<title>Robot</title>
+
+<script type="text/javascript">
+
+//Create an object
+var robot = 
+{
+  material: "titanium", 
+  happy: true,
+  
+  makeBreakfast: function()
+  {
+    console.log("Here are your waffles and milk, master."); 
+  }
+};
+
+//Loop through all the robot's properties and methods
+console.log("--- The robot's properties and methods ---");
+
+for(var i in robot)
+{
+  console.log(i + ": " + robot[i]);
+}
+
+//Find the robot's material
+
+for(var i in robot)
+{
+  if(i === "material")
+  {
+    console.log("The robot is made from " + robot[i]);
+    break;
+  }
+}
+
+//Make a new robot
+
+var newRobot = Object.create(robot);
+
+//Add a new method to the robot
+
+newRobot.newProperty = "This belongs to the newRobot";
+
+//Loop through all the new robot's properties and methods
+console.log("--- All the new robot's properties and methods ---");
+
+for(var i in newRobot)
+{
+  console.log(i + ": " + newRobot[i]);
+}
+
+//Loop through only the properties and methods that belong to the new robot
+console.log("--- Only the new robot's properties and methods ---");
+
+for(var i in newRobot)
+{
+  if(newRobot.hasOwnProperty(i))
+  {
+    console.log(i + ": " + newRobot[i]);
+  }
+}
+
+</script>

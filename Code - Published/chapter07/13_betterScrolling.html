@@ -1,0 +1,298 @@
+<!doctype html>
+<title>Better scrolling</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script>
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  x: 0,
+  y: 0,
+  width: 64,
+  height: 64,
+  vx: 0,
+  vy: 0
+};
+
+//--- The main program
+
+//the canvas and its drawing surfave
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//An array to store the sprites
+var sprites = [];
+
+//Create the background sprite
+var background = Object.create(spriteObject);
+background.sourceY = 64;
+background.sourceWidth = 2561;
+background.sourceHeight = 1922;
+background.width = 2561;
+background.height = 1922;
+background.x = 0 //-(background.width - canvas.width) / 2; 
+background.y = 0//-(background.height - canvas.height) / 2;
+sprites.push(background);
+
+//Create the gameWorld and camera objects
+var gameWorld = 
+{
+  x: 0,
+  y: 0,
+  width: background.width,
+  height: background.height
+};
+
+var camera = 
+{
+  x: 0,
+  y: 0,
+  width: canvas.width,
+  height: canvas.height,
+  
+  //The camera's inner scroll boundaries
+  rightInnerBoundary: function()
+  {
+    return this.x + (this.width * 0.75);
+  },
+  leftInnerBoundary: function()
+  {
+    return this.x + (this.width * 0.25);
+  },
+  topInnerBoundary: function()
+  {
+    return this.y + (this.height * 0.25);
+  },
+  bottomInnerBoundary: function()
+  {
+    return this.y + (this.height * 0.75);
+  }
+};
+
+//Center the camera over the gameWorld
+camera.x = (gameWorld.x + gameWorld.width / 2) - camera.width / 2;
+camera.y = (gameWorld.y + gameWorld.height / 2) - camera.height / 2;
+
+//Create the cat sprite and center it
+var cat = Object.create(spriteObject);
+cat.x = (gameWorld.x + gameWorld.width / 2) - cat.width / 2;
+cat.y = (gameWorld.y + gameWorld.height / 2) - cat.height / 2;
+sprites.push(cat);
+
+//Load the image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "phobosTileSheet.png";
+
+//Arrow key codes
+var UP = 38;
+var DOWN = 40;
+var RIGHT = 39;
+var LEFT = 37;
+
+//Directions
+var moveUp = false;
+var moveDown = false;
+var moveRight = false;
+var moveLeft = false;
+
+//Add keyboard listeners
+window.addEventListener("keydown", function(event)
+{
+  switch(event.keyCode)
+  {
+    case UP:
+	    moveUp = true;
+	    break;
+	  
+	  case DOWN:
+	    moveDown = true;
+	    break;
+	    
+	  case LEFT:
+	    moveLeft = true;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = true;
+	    break; 
+  }
+}, false);
+
+window.addEventListener("keyup", function(event)
+{
+  switch(event.keyCode)
+  {
+    case UP:
+	    moveUp = false;
+	    break;
+	  
+	  case DOWN:
+	    moveDown = false;
+	    break;
+	    
+	  case LEFT:
+	    moveLeft = false;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = false;
+	    break; 
+  }
+}, false);
+
+function loadHandler()
+{ 
+  update();
+}
+
+function update()
+{
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Up
+  if(moveUp && !moveDown)
+  {
+    cat.vy = -5;
+  }
+  //Down
+  if(moveDown && !moveUp)
+  {
+    cat.vy = 5;
+  }
+  //Left
+  if(moveLeft && !moveRight)
+  {
+    cat.vx = -5;
+  }
+  //Right
+  if(moveRight && !moveLeft)
+  {
+    cat.vx = 5;
+  }
+  
+  //Set the cat's velocity to zero if none of the keys are being pressed
+  if(!moveUp && !moveDown)
+  {
+    cat.vy = 0;
+  }
+  if(!moveLeft && !moveRight)
+  {
+    cat.vx = 0;
+  }
+  
+  //Move the cat and keep it inside the gameWorld boundaries
+  cat.x = Math.max(0, Math.min(cat.x + cat.vx, gameWorld.width - cat.width)); 
+  cat.y = Math.max(0, Math.min(cat.y + cat.vy, gameWorld.height - cat.height)); 
+  
+  //Scroll the camera
+  if(cat.x < camera.leftInnerBoundary())
+  {
+    camera.x = Math.floor(cat.x - (camera.width * 0.25));
+  }
+  if(cat.y < camera.topInnerBoundary())
+  {
+    camera.y = Math.floor(cat.y - (camera.height * 0.25));
+  }
+  if(cat.x + cat.width > camera.rightInnerBoundary())
+  {
+    camera.x = Math.floor(cat.x + cat.width - (camera.width * 0.75));
+  }
+  if(cat.y + cat.height > camera.bottomInnerBoundary())
+  {
+    camera.y = Math.floor(cat.y + cat.height - (camera.height * 0.75));
+  }
+  
+  //The camera's world boundaries
+  if(camera.x < gameWorld.x)
+  {
+    camera.x = gameWorld.x;
+  }
+  if(camera.y < gameWorld.y)
+  {
+    camera.y = gameWorld.y;
+  }
+  if(camera.x + camera.width > gameWorld.x + gameWorld.width)
+  {
+    camera.x = gameWorld.x + gameWorld.width - camera.width;
+  }
+  if(camera.y + camera.height > gameWorld.height)
+  {
+    camera.y = gameWorld.height - camera.height;
+  } 
+  
+  /*
+  if(cat.x < camera.leftInnerBoundary())
+  {
+    camera.x = Math.max(0, Math.min
+    (
+      Math.floor(cat.x - (camera.width * 0.25)), 
+      gameWorld.width - camera.width
+    ));
+  }
+  if(cat.y < camera.topInnerBoundary())
+  {
+    camera.y = Math.max(0, Math.min
+    (
+      Math.floor(cat.y - (camera.height * 0.25)), 
+      gameWorld.height - camera.height
+    ));
+  }
+  if(cat.x + cat.width > camera.rightInnerBoundary())
+  {
+    camera.x = Math.max(0, Math.min
+    (
+      Math.floor(cat.x + cat.width - (camera.width * 0.75)), 
+      gameWorld.width - camera.width
+    ));
+  }
+  if(cat.y + cat.height > camera.bottomInnerBoundary())
+  {
+    camera.y = Math.max(0, Math.min
+    (
+      Math.floor(cat.y + cat.height - (camera.height * 0.75)), 
+      gameWorld.height - camera.height
+    ));
+  }
+  */
+  render();
+}
+
+function render(event)
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  drawingSurface.save();
+  
+  //Move the drawing surface so that it's positioned relative to the camera
+  drawingSurface.translate(-camera.x, -camera.y);
+  
+  //Loop through all the sprites and use their properties to display them
+  if(sprites.length !== 0)
+  {
+    for(var i = 0; i < sprites.length; i++)
+    {
+      var sprite = sprites[i];
+      drawingSurface.drawImage
+      (
+        image, 
+        sprite.sourceX, sprite.sourceY, 
+        sprite.sourceWidth, sprite.sourceHeight,
+        Math.floor(sprite.x), Math.floor(sprite.y), 
+        sprite.width, sprite.height
+      ); 
+    }
+  }
+  
+  drawingSurface.restore();
+}
+</script>

@@ -1,0 +1,46 @@
+*
+{
+  padding: 0px;
+  margin: 0px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+#stage 
+{
+  position: relative;
+  width: 552px;
+  height: 414px;
+}
+
+canvas
+{
+  display: block;
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  
+  -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	-moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	
+	cursor: pointer;	
+}
+
+@font-face 
+{
+  font-family: Vanilla;
+  src: url("../fonts/Vanilla.ttf");
+}
+
+p
+{
+  font-family: Vanilla;
+  font-size: 20px;
+  padding: 20px;
+}

@@ -1,0 +1,231 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width = device-width, initial-scale = 1.0, user-scalable = no">
+<title>Bee Follow</title>
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+//*** Note: uses a rotationSpeed property to determine how fast the object should rotate
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  rotation: 0,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0,
+  speed: 3, 
+  rotationSpeed: 0.3,
+  speedLimit: 5, 
+  friction: 0.96,
+      
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The bee
+var bee = Object.create(spriteObject);
+bee.sourceWidth = 77;
+bee.width = 77;
+bee.x = canvas.width / 2 - bee.halfWidth();
+bee.y = canvas.height / 2 - bee.halfHeight();
+sprites.push(bee);
+
+//The touch point
+var touchX = 0;
+var touchY = 0;
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/bee.png";
+assetsToLoad.push(image);
+
+//Add listeners
+canvas.addEventListener("touchmove", touchmoveHandler, false);
+
+//The angle between the touch point and the center of the bee
+var angle = 0;
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function touchmoveHandler(event)
+{ 
+  //Find the touch point's x and y position.
+  //Subtract the canvas's top and left offset
+  touchX = event.targetTouches[0].pageX - canvas.offsetLeft;
+  touchY = event.targetTouches[0].pageY - canvas.offsetTop;
+  event.preventDefault(); 
+}
+
+function playGame()
+{ 
+  //Calculate the vector between the touch point and the bee
+	var vx = touchX - bee.centerX();
+	var vy = touchY - bee.centerY();	
+		
+	//The distance between the touch point and the bee	
+	var distance = Math.sqrt(vx * vx + vy * vy);
+	
+	//The range, in pixels, to which the bee should be sensitive
+	var range = 200;
+	
+	if (distance <= range)
+	{
+		//Find out how much to move
+		var moveX = bee.rotationSpeed * vx / distance;
+		var moveY = bee.rotationSpeed * vy / distance;
+		
+		//Increase the bee's velocity 
+		bee.vx += moveX; 
+		bee.vy += moveY;
+		
+		//Find the total distance to move
+		var moveDistance = Math.sqrt(bee.vx * bee.vx + bee.vy * bee.vy);
+		
+		//Apply easing
+		bee.vx =  bee.speed * bee.vx / moveDistance;
+		bee.vy =  bee.speed * bee.vy / moveDistance;
+		
+		//Rotate the bee towards the target
+		//Find the angle in radians
+		angle = Math.atan2(bee.vy, bee.vx);
+		
+		//Convert the radians to degrees to rotate
+		//the bee correctly
+		bee.rotation = angle * 180 / Math.PI + 90;
+		
+		//Make the bee rotate away from the touch point
+		//bee.rotation = angle * 180 / Math.PI + -90;
+	}
+	
+	//Apply friction 
+	bee.vx *= bee.friction;
+	bee.vy *= bee.friction;
+	
+	//Move the bee
+	bee.x += bee.vx;
+	bee.y += bee.vy;
+	
+	//Make the bee move away from the touch point
+	//bee.x += -bee.vx;
+	//bee.y += -bee.vy;
+}
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	    var sprite = sprites[i];
+	     
+	    //Save the current state of the drawing surface
+	    //before it's rotated
+	    drawingSurface.save();
+	  
+      //Rotate the canvas
+    	drawingSurface.translate
+    	(
+    	  Math.floor(sprite.x + (sprite.width / 2)), 
+    	  Math.floor(sprite.y + (sprite.width / 2))
+    	);
+	    drawingSurface.rotate(sprite.rotation * Math.PI / 180);
+    
+	    if(sprite.visible)
+	    {
+		    drawingSurface.drawImage
+		    (
+		      image, 
+		      sprite.sourceX, sprite.sourceY, 
+		      sprite.sourceWidth, sprite.sourceHeight,
+		      Math.floor(-sprite.halfWidth()), Math.floor(-sprite.halfHeight()), 
+		      sprite.width, sprite.height
+		    );
+	    }
+	     
+      //Restore the drawing surface to its 
+      //state before it was rotated
+      drawingSurface.restore();
+	  }
+  }
+}
+
+</script>

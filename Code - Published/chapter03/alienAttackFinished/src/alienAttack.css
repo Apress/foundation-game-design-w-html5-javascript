@@ -1,0 +1,176 @@
+*
+{
+  font-family: emulogic;  
+  padding: 0px;
+  margin: 0px;
+}
+
+@font-face 
+{
+  font-family: emulogic;
+  src: url("../fonts/emulogic.ttf");
+  
+  /*
+  
+  Note: Firefox requires that the font file
+  be in the same folder as the CSS file.
+  If you are using Firefox, copy the emulogic.ttf font
+  into the src folder and use this src property:
+  
+  src: url("../fonts/emulogic.ttf");
+  
+  */
+  
+}
+
+
+h1
+{
+  text-align: center;
+  font-size: 24px;
+  color: #FFBF00;
+  padding-bottom: 20px;
+  
+  text-shadow: 3px 3px lime;
+  
+  -webkit-text-stroke: 1px #000;
+  -moz-text-stroke: 1px #000;
+  text-stroke: 1px #000;
+}
+
+p
+{
+  text-align: center;
+  font-size: 12px;
+  padding-bottom: 20px;
+  color: #FFBF00;
+}
+
+input
+{
+  font-size: 15px;
+  background-color: black;
+  color: #FFBF00;
+  width: 75px;
+  padding: 5px 10px;
+  border: 1px solid lime;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;	
+}
+
+button
+{
+  font-size: 15px;
+  color: #FFBF00;
+  padding: 5px 10px;
+  border: 2px solid lime;
+	
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;	
+  background: black;
+	
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+button:hover
+{
+  background-color: #FFBF00;
+  color: #000;
+}
+
+button:active
+{
+  background-color: #9e7606;
+  color: #000;
+}
+
+#game
+{
+  margin: 0px auto;
+  width: 330px;
+  height: auto;
+  padding: 15px;
+  border: black;  
+  
+  background:-webkit-linear-gradient(300deg, #588063, #000);
+	background:-moz-linear-gradient(top, #588063, #000);
+	background: linear-gradient(top, #588063, #000);
+	
+	-webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	-moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;	
+}
+
+#stage
+{
+  margin: 0px auto;
+  width: 300px;
+  height: 300px;
+	position: relative;
+	
+  -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	
+	margin-bottom: 20px;
+	border: 1px solid lime;
+}
+
+#background
+{
+  width: 300px;
+  height: 300px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background-image: url(../images/background.png);
+}
+
+#cannon
+{
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 270px;
+  left: 140px;
+  background-image: url(../images/cannon.png);
+}
+
+#alien
+{
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 20px;
+  left: 80px;
+  background-image: url(../images/alien.png);
+}
+
+#missile
+{
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  top: 240px;
+  left: 145px;
+  background-image: url(../images/missile.png);
+}
+
+#explosion
+{
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background-image: url(../images/explosion.png);
+  display: none;
+}

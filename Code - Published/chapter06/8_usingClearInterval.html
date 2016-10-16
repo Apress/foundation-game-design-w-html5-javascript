@@ -1,0 +1,23 @@
+<!doctype html>
+<title>Using clearInterval</title>
+
+<script>
+
+var interval = window.setInterval(timer, 1000);
+var counter = 0;
+
+function timer()
+{ 
+  if(counter < 5)
+  {
+    console.log("tick! " + counter);
+  }
+  else
+  {
+    window.clearInterval(interval);
+  }
+  
+  counter++;
+}
+
+</script>

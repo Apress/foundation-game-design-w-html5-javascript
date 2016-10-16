@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Alien Armada!</title>
+
+<!-- The stylesheet -->
+<link rel="stylesheet" href="alienAttack.css">
+
+<!-- The sounds -->
+<audio id="music">
+  <source src="../sounds/music.mp3" type="audio/mpeg" loop>
+  <source src="../sounds/music.ogg" type="audio/ogg" loop>
+</audio>
+<audio id="shootSound">
+  <source src="../sounds/shoot.mp3" type="audio/mpeg">
+  <source src="../sounds/shoot.ogg" type="audio/ogg">
+</audio>
+<audio id="explosionSound">
+  <source src="../sounds/explosion.mp3" type="audio/mpeg">
+  <source src="../sounds/explosion.ogg" type="audio/ogg">
+</audio>
+
+<!-- The canvas -->
+<canvas width="480" height="320"></canvas>
+
+<!-- The game code -->
+<script src="requestAnimationFramePolyfill.js"></script>
+<script src="../src/objects.js"></script>
+<script src="../src/collision.js"></script>
+
+<!-- Change the JS file below to "alienArmada1.js" to view the first stage in the project -->
+<script src="../src/alienArmadaFinished.js"></script>

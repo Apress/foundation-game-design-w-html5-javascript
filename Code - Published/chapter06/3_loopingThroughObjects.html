@@ -1,0 +1,91 @@
+<!doctype html>
+<title>Looping through objects</title>
+
+<script>
+
+//A basic object
+var robot = 
+{
+  material: "titanium", 
+  happy: true,
+  
+  makeBreakfast: function()
+  {
+    if(this.happy)
+    {
+      console.log("Here are your waffles and milk, master."); 
+    }
+    else
+    {
+      console.log("Here's your burnt toast and lukewarm water, master.");
+    }
+  }
+};
+
+//Loop through the object's properties
+for(var i in robot)
+{
+  console.log(i + ": " + robot[i]);
+}
+
+/*
+This is what that above loop displays:
+
+material: titanium
+happy: true
+makeBreakfast: function(){
+
+*/
+
+//Find the value of a specific property
+if("material" in robot)
+{
+  console.log("The robot is made from: " + robot.material);
+}
+
+/*
+This is what that above loop displays:
+
+The robot is made from titanium
+
+*/
+
+//Create a new object and add a new property to it
+var newRobot = Object.create(robot);
+newRobot.newProperty = "This belongs to the newRobot";
+
+//Use a loop to find out what properties newRobot has
+
+for(var i in newRobot)
+{
+  console.log(i + ": " + newRobot[i]);
+}
+
+/*
+This is what that above loop displays:
+
+newProperty: This belongs to the newRobot
+material: titanium
+happy: true
+makeBreakfast: function(){
+
+*/
+
+//Find properties that only belong to the newRobot
+for(var i in newRobot)
+{
+  if(newRobot.hasOwnProperty(i))
+  {
+    console.log(i + ": " + newRobot[i]);
+  }
+}
+
+/*
+This is what that above loop displays:
+
+newProperty: This belongs to the newRobot
+
+*/
+
+
+</script>

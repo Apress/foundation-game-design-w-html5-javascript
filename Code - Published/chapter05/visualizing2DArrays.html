@@ -1,0 +1,74 @@
+<!doctype html>
+<title>Visualizing 2D arrays</title>
+
+<style>
+
+#stage 
+{
+  position: relative;
+}
+
+.cell
+{
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 1px solid black;
+  background-color: white;
+}
+
+</style>
+
+<div id="stage"></div>
+
+<script>
+
+//Get a reference to the stage
+var stage = document.querySelector("#stage");
+
+//The 2D array that defines the pattern
+var pattern =
+[
+  [1, 0, 1],
+  [0, 1, 0],
+  [1, 0, 1]
+];
+
+//The size of each cell
+var SIZE = 30;
+
+//The space between each cell
+var SPACE = 10;
+
+//Display the array
+var ROWS = pattern.length;
+var COLUMNS = pattern[0].length;
+
+for(var row = 0; row < ROWS; row++) 
+{	
+  for(var column = 0; column < COLUMNS; column++) 
+  { 
+    //Create a div HTML element called cell
+    var cell = document.createElement("div");
+    
+    //Set it's CSS class to "cell"
+    cell.setAttribute("class", "cell");
+    
+    //Add the div HTML element to the stage
+    stage.appendChild(cell);
+    
+    //Make it black if it's a "1"
+    if(pattern[row][column] === 1)
+    {
+      cell.style.backgroundColor = "black";
+    }
+    
+    //Position the cell in the correct place
+    //with 10 pixels of space around it
+    cell.style.top = row * (SIZE + SPACE) + "px";
+    cell.style.left = column * (SIZE + SPACE) + "px";
+  }
+}
+
+</script>
+

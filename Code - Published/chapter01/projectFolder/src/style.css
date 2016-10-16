@@ -1,0 +1,14 @@
+h1, h2
+{
+	font-family: Monaco, Courier, monospace;
+}
+
+h1
+{
+	font-size: 20px;
+}
+
+h2
+{
+	font-size: 16px;
+}

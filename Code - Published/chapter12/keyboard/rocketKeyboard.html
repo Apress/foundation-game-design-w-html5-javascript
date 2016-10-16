@@ -1,0 +1,354 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Rocket</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+//*** Note: This version adds a rotationSpeed property to help rotate the spaceship
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  rotation: 0,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0,
+  rotationSpeed: 0,
+  speed: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var bullets = [];
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The mouse
+var mouseX = undefined;
+var mouseY = undefined;
+
+//Hide the mouse
+//canvas.style.cursor = "none";
+
+//The rocket
+var rocket = Object.create(spriteObject);
+rocket.x = canvas.width / 2 - rocket.halfWidth();
+rocket.y = canvas.height / 2 - rocket.halfHeight();
+sprites.push(rocket);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/vehicles.png";
+assetsToLoad.push(image);
+
+//Add listeners
+window.addEventListener("keydown", keydownHandler, false);
+window.addEventListener("keyup", keyupHandler, false);
+
+//The angle between the mouse and the center of the rocket
+var angle = undefined;
+
+//Arrow key codes
+var SPACE = 32;
+var UP = 38;
+var DOWN = 40;
+var RIGHT = 39;
+var LEFT = 37;
+
+//Rocket actions
+var rotateLeft = false;
+var rotateRight = false;
+var go = false;
+var shoot = false;
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function mousemoveHandler(event)
+{ 
+  //Find the mouse's x and y position.
+  //Subtract the canvas's top and left offset
+  mouseX = event.pageX - canvas.offsetLeft;
+  mouseY = event.pageY - canvas.offsetTop;
+}
+
+function keydownHandler(event)
+{
+	switch(event.keyCode)
+  {   
+	  case UP:
+      go = true;
+	    break;
+	    
+	  case LEFT:
+      rotateLeft = true;
+	    break;
+	    
+	  case RIGHT:
+      rotateRight = true;
+	    break;
+	    
+	  case SPACE:
+      shoot = true;
+	    break;
+	 }
+}
+
+function keyupHandler(event)
+{
+  if (event.keyCode === UP) 
+  {
+    go = false;
+  }
+  if (event.keyCode === LEFT) 
+  {
+    rotateLeft = false;
+  }
+  if (event.keyCode === RIGHT) 
+  {
+    rotateRight = false;
+  }
+}
+
+function createBullet()
+{ 
+  //Create a bullet sprite
+  var bullet = Object.create(spriteObject);
+  bullet.sourceX = 256;
+  bullet.sourceWidth = 10;
+  bullet.sourceHeight = 10;
+  bullet.width = 10;
+  bullet.height = 10;
+  
+  //Center it over the rocket
+  var radius = 32;
+	bullet.x 
+	  = rocket.centerX() - bullet.halfWidth()
+	  + (radius * Math.cos(angle));
+	  
+	bullet.y 
+	  = rocket.centerY() - bullet.halfHeight()
+	  + (radius * Math.sin(angle));
+  
+  //Set its speed
+  bullet.vx = Math.cos(angle) * 7 + rocket.vx;
+  bullet.vy = Math.sin(angle) * 7 + rocket.vy;
+
+  //Push the bullet into both the sprites and bullets arrays
+  sprites.push(bullet);
+  bullets.push(bullet);
+}
+
+function playGame()
+{ 
+  //Go
+  if(go)
+  {
+    rocket.speed = 0.2;
+    rocket.friction = 1;
+  }
+  else
+  {
+    rocket.speed = 0;
+    rocket.friction = 0.96;
+  }
+  //Rotate left
+  if(rotateLeft && !rotateRight)
+  {
+    rocket.rotationSpeed = -10;
+  }
+  //Rotate right
+  if(rotateRight && !rotateLeft)
+  {
+    rocket.rotationSpeed = 10;
+  }
+  if(!rotateLeft && !rotateRight)
+  {
+    rocket.rotationSpeed = 0;
+  }
+  //Shoot
+  if(shoot)
+  {
+    createBullet();
+    shoot = false;
+  }
+  
+  //Rotate the rocket
+  angle = rocket.rotation  * (Math.PI / 180); 
+  rocket.rotation += rocket.rotationSpeed;
+  
+  //Figure out the acceleration based on the angle
+  rocket.accelerationX = Math.cos(angle) * rocket.speed; 
+  rocket.accelerationY = Math.sin(angle) * rocket.speed;
+  
+  //Add the acceleration to the velocity
+	rocket.vx += rocket.accelerationX; 
+	rocket.vy += rocket.accelerationY;
+  
+  //Add friction
+  rocket.vx *= rocket.friction;
+  rocket.vy *= rocket.friction;
+				
+  //Move the rocket
+  rocket.x += rocket.vx;
+  rocket.y += rocket.vy;
+  
+  //--- The bullets
+  
+  //Move the bullets
+  for(var i = 0; i < bullets.length; i++)
+  {
+    var bullet = bullets[i];
+    
+    //Move it    
+    bullet.x += bullet.vx;
+    bullet.y += bullet.vy;
+    
+    //Remove the bullet if it crosses the top of the screen
+    if (bullet.centerY() < 0
+    || bullet.centerX() < 0
+    || bullet.centerX() > canvas.width
+    || bullet.centerY() > canvas.height)
+    { 
+      //Remove the bullet from the bullets array
+      removeObject(bullet, bullets);
+ 
+      //Remove the bullet from the sprites array
+      removeObject(bullet, sprites);
+      
+      //Reduce the loop counter by 1 to compensate 
+      //for the removed element
+      i--;
+    }
+  }	
+}
+
+function removeObject(objectToRemove, array) 
+{ 
+  var i = array.indexOf(objectToRemove);
+  if (i !== -1)
+  {
+    array.splice(i, 1);
+  }
+}
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	    var sprite = sprites[i];
+	     
+	    //Save the current state of the drawing surface
+	    //before it's rotated
+	    drawingSurface.save();
+	  
+	    //Rotate the canvas
+    	drawingSurface.translate
+    	(
+    	  Math.floor(sprite.x + sprite.halfWidth()), 
+    	  Math.floor(sprite.y + sprite.halfHeight())
+    	);
+	    drawingSurface.rotate(sprite.rotation * Math.PI / 180);
+    
+	    if(sprite.visible)
+	    {
+		    drawingSurface.drawImage
+		    (
+		      image, 
+		      sprite.sourceX, sprite.sourceY, 
+		      sprite.sourceWidth, sprite.sourceHeight,
+		      Math.floor(-sprite.halfWidth()), Math.floor(-sprite.halfHeight()), 
+		      sprite.width, sprite.height
+		    );
+	     }
+	     
+       //Restore the drawing surface to its 
+       //state before it was rotated
+       drawingSurface.restore();
+	  }
+  }
+}
+
+</script>

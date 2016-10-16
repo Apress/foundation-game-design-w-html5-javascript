@@ -1,0 +1,85 @@
+<!doctype html>
+<title>Rendering states</title>
+
+<canvas width="64" height="64"></canvas>
+
+<script>
+
+var monster =
+{
+  //The monster's image
+  image: "monsterStates.png",
+  
+  //The monster's states
+  NORMAL: 0,
+  SCARED: 1,
+  
+  //Set its initial state
+  state: 0
+};
+
+//Set up the canvas and drawing surface
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//Load the monster's image
+var monsterImage = new Image();
+monsterImage.addEventListener("load", render, false);
+monsterImage.src = monster.image;
+
+//Change the monsters state by pressing and releasing a key
+window.addEventListener("keydown", keydownHandler, false);
+window.addEventListener("keyup", keyupHandler, false);
+
+function keydownHandler(event)
+{
+  //When a key is pressed, change the
+  //monster's state to SCARED and render it
+  monster.state = monster.SCARED;
+  render();
+}
+
+function keyupHandler(event)
+{
+  //When a key is released, change the
+  //monster's state to NORMAL and render it
+  monster.state = monster.NORMAL;
+  render();
+}
+
+function render()
+{
+  
+  //Render the correct state 
+  switch(monster.state)
+  {
+    case monster.NORMAL:
+      drawingSurface.drawImage
+      (
+        monsterImage, 
+        0, 0, 64, 64, 
+        0, 0, 64, 64
+      );
+      break;
+    
+    case monster.SCARED:
+      drawingSurface.drawImage
+      (
+        monsterImage, 
+        64, 0, 64, 64, 
+        0, 0, 64, 64
+      );
+  }
+  //Shortcut
+  /*
+  drawingSurface.drawImage
+  (
+    monsterImage, 
+    64 * monster.state, 0, 64, 64, 
+    0, 0, 64, 64
+  );
+  */
+}
+
+</script>
+

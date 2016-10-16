@@ -1,0 +1,30 @@
+<!doctype html>
+<title>Artificial life</title>
+
+<p id="output">Hi! How are you today?</p>
+<input id="input" type="text" placeholder="Enter some text…"> 
+<button>enter</button>
+
+<script>
+
+var replies = [];
+
+replies[0] = "Oh really??";
+replies[1] = "That's interesting.";
+replies[2] = "Now I'm not so sure. Can you explain?";
+replies[3] = "And how do you feel about that?";
+replies[4] = "Is that usual for you?";
+
+var output = document.querySelector("#output");
+
+var button = document.querySelector("button");
+button.addEventListener("click", clickHandler, false);
+button.style.cursor = "pointer";
+	
+function clickHandler()
+{
+  var randomNumber = Math.floor(Math.random() * 5);
+  output.innerHTML = replies[randomNumber];
+}
+
+</script>

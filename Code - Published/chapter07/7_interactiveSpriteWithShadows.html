@@ -1,0 +1,301 @@
+<!doctype html>
+<title>Interactive sprite</title>
+
+<button id="up">up</button>
+<button id="down">down</button>
+<button id="right">right</button>
+<button id="left">left</button>
+<button id="hide">hide</button>
+<button id="show">show</button>
+<button id="bigger">bigger</button>
+<button id="smaller">smaller</button>
+<button id="rotateRight">rotate right</button>
+<button id="rotateLeft">rotate left</button>
+<button id="moreTransparent">more transparent</button>
+<button id="lessTransparent">less transparent</button>
+<button id="shadowOn">shadow on</button>
+<button id="shadowOff">shadow off</button>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script>
+
+//--- The sprite object
+
+var spriteObject =
+{
+  //The x and y source position of the image
+  //And its height and width
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  
+  //The x and y position of the sprite on the canvas
+  //as well as its height
+  x: 0,
+  y: 0,
+  width: 64,
+  height: 64,
+  
+  //A property to tell us if the sprite is visible
+  visible: true,
+  
+  //The sprite's rotation, in degrees
+  rotation: 0,
+  
+  //The sprite's transparency (0.0 to 1.0)
+  alpha: 1,
+  
+  //The sprite's shadow
+  shadow: true
+};
+
+//--- The main program
+
+//the canvas and its drawing surfave
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//An array to store the game sprites
+var sprites = [];
+
+//Create the cat sprite, center it
+//and add it to the sprites array
+var cat = Object.create(spriteObject);
+cat.x = 243;
+cat.y = 168;
+sprites.push(cat);
+
+//Load the cat's image 
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "cat.png";
+
+//Add event listeners to the buttons
+
+//Up button
+var up = document.querySelector("#up");
+up.addEventListener("mousedown", upHandler, false);
+
+//Down button
+var up = document.querySelector("#down");
+down.addEventListener("mousedown", downHandler, false);
+
+//Right button
+var right = document.querySelector("#right");
+right.addEventListener("mousedown", rightHandler, false);
+
+//Left button
+var left = document.querySelector("#left");
+left.addEventListener("mousedown", leftHandler, false);
+
+//Hide button
+var hide = document.querySelector("#hide");
+hide.addEventListener("mousedown", hideHandler, false);
+
+//Show button
+var hide = document.querySelector("#show");
+show.addEventListener("mousedown", showHandler, false);
+
+//Bigger button
+var bigger = document.querySelector("#bigger");
+bigger.addEventListener("mousedown", biggerHandler, false);
+
+//Smaller button
+var smaller = document.querySelector("#smaller");
+smaller.addEventListener("mousedown", smallerHandler, false);
+
+//Rotate right button
+var rotateRight = document.querySelector("#rotateRight");
+rotateRight.addEventListener("mousedown", rotateRightHandler, false);
+
+//Rotate left button
+var rotateLeft = document.querySelector("#rotateLeft");
+rotateLeft.addEventListener("mousedown", rotateLeftHandler, false);
+
+//More transparent button
+var moreTransparent = document.querySelector("#moreTransparent");
+moreTransparent.addEventListener("mousedown", moreTransparentHandler, false);
+
+//Less transparent button
+var lessTransparent = document.querySelector("#lessTransparent");
+lessTransparent.addEventListener("mousedown", lessTransparentHandler, false);
+
+//Shadow on button
+var shadowOn = document.querySelector("#shadowOn");
+shadowOn.addEventListener("mousedown", shadowOnHandler, false);
+
+//Shadow off button
+var shadowOff = document.querySelector("#shadowOff");
+shadowOff.addEventListener("mousedown", shadowOffHandler, false);
+
+function loadHandler()
+{
+  //Run the update animation loop when the image has loaded
+  update();
+}
+
+function update()
+{
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Render the sprite
+  render();
+}
+
+//The button eventHandlers
+
+//Up
+function upHandler(event)
+{
+  cat.y -= 10;
+}
+
+//Down
+function downHandler(event)
+{
+  cat.y += 10;
+}
+
+//Right
+function rightHandler(event)
+{
+  cat.x += 10;
+}
+
+//Left
+function leftHandler(event)
+{
+  cat.x -= 10;
+}
+
+//Hide
+function hideHandler(event)
+{
+  cat.visible = false;
+}
+
+//Show
+function showHandler(event)
+{
+  cat.visible = true;
+}
+
+//Bigger
+function biggerHandler(event)
+{
+  cat.height += 10;
+  cat.width += 10;
+  cat.x -= 5;
+  cat.y -= 5;
+}
+
+//Smaller
+function smallerHandler(event)
+{
+  cat.height -= 10;
+  cat.width -= 10;
+  cat.x += 5;
+  cat.y += 5;
+}
+
+//Rotate right
+function rotateRightHandler(event)
+{
+  cat.rotation += 10;
+}
+
+//Rotate left
+function rotateLeftHandler(event)
+{
+  cat.rotation -= 10;
+}
+
+//More transparent
+function moreTransparentHandler(event)
+{
+  if(cat.alpha > 0.1)
+  {
+    cat.alpha -= 0.1;
+  }
+}
+
+//Less transparent
+function lessTransparentHandler(event)
+{
+  if(cat.alpha < 1)
+  {
+    cat.alpha += 0.1;
+  }
+}
+
+//Shadow on
+function shadowOnHandler(event)
+{
+  cat.shadow = true;
+}
+
+//Shadow off
+function shadowOffHandler(event)
+{
+  cat.shadow = false;
+}
+
+function render(event)
+{ 
+  //Clear the previous animation frame
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+  	for(var i = 0; i < sprites.length; i++)
+  	{
+  	  var sprite = sprites[i];
+  	  
+      if(sprite.visible)
+  	  {
+  	    //Save the current state of the drawing surface before it's rotated
+  	    drawingSurface.save();
+
+  	    //Rotate the canvas
+  	    drawingSurface.translate
+  	    (
+  	      Math.floor(sprite.x + (sprite.width / 2)), 
+  	      Math.floor(sprite.y + (sprite.width / 2))
+  	    );
+  	    
+  	    drawingSurface.rotate(sprite.rotation * Math.PI / 180);
+  	    
+  	    //Render the sprite's transparency
+        drawingSurface.globalAlpha = sprite.alpha;
+        
+        //Shadow
+        if(sprite.shadow)
+        {
+          drawingSurface.shadowColor = "rgba(100, 100, 100, 0.5)";
+          drawingSurface.shadowOffsetX = 3;
+          drawingSurface.shadowOffsetY = 3;
+          drawingSurface.shadowBlur = 3;
+        }
+
+  		  drawingSurface.drawImage
+  		  (
+  		    image, 
+  		    sprite.sourceX, sprite.sourceY, 
+  		    sprite.sourceWidth, sprite.sourceHeight,
+  		    Math.floor(-sprite.width / 2), Math.floor(-sprite.height / 2), 
+  		    sprite.width, sprite.height
+  		  );
+
+        //Restore the drawing surface to its state before it was rotated
+        drawingSurface.restore();
+      }
+  	}
+  }
+}
+
+</script>

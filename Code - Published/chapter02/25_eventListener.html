@@ -1,0 +1,27 @@
+<!doctype html>
+<title>Event listener</title>
+
+<button>click me</button>
+
+<script>
+
+var button = document.querySelector("button");
+button.addEventListener("click", clickHandler, false);
+
+//Change the mouse arrow to a pointing hand
+//button.style.cursor = "pointer";
+	
+function clickHandler()
+{
+  console.log("Button clicked");
+}
+
+//You can combine the event listener and handler in one block of code like this:
+/*
+button.addEventListener("click", function()
+{
+  console.log("Button clicked");
+}, false);
+*/
+
+</script>

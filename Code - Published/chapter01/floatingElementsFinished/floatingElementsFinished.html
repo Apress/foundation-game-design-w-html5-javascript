@@ -1,0 +1,62 @@
+<!doctype html>
+<title>Floating elements</title>
+
+<style>
+
+@font-face 
+{
+  font-family: LondrinaSolid-Regular;
+  src: url("LondrinaSolid-Regular.otf");
+}
+
+#stage
+{
+  display: block;
+	width: 400px;
+	height: 300px;
+	border: 1px dashed black;
+}
+
+h1
+{
+  clear: left;
+  display: block;
+  text-align: center;
+	padding-top: 50px;
+	font-family: LondrinaSolid-Regular;
+	font-size: 40px;
+}
+
+.animal
+{
+	display: block;
+	width: 100px;
+	height: 100px;
+	margin-left: 25px;
+	margin-top: 50px;
+	float: left;
+}
+
+#cat
+{
+  background-image: url("cat.png");
+}
+
+#tiger
+{
+  background-image: url("tiger.png");
+}
+
+#hedgehog
+{
+  background-image: url("hedgehog.png");
+}
+
+</style>
+
+<div id="stage">
+<div class="animal" id="cat"></div>
+<div class="animal" id="tiger"></div>
+<div class="animal" id="hedgehog"></div>
+<h1>Dangerous Animals!</h1>
+</div>

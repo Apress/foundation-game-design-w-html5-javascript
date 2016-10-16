@@ -1,0 +1,280 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Jumping</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Platform game properties   
+  isOnGround: undefined,
+  jumpForce: -10,
+
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The cat
+var cat = Object.create(spriteObject);
+cat.x = canvas.width / 2 - cat.halfWidth();
+cat.y = canvas.height / 2 - cat.halfHeight();
+sprites.push(cat);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "cat.png";
+assetsToLoad.push(image);
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+//Key codes
+var RIGHT = 39;
+var LEFT = 37;
+var SPACE = 32;
+
+//Directions
+var moveRight = false;
+var moveLeft = false;
+var jump = false;
+
+//Add keyboard listeners
+window.addEventListener("keydown", function(event)
+{
+  switch(event.keyCode)
+  {   
+	  case LEFT:
+	    moveLeft = true;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = true;
+	    break; 
+	  
+	  case SPACE:
+  	  jump = true;
+  	  break;
+  }
+}, false);
+
+window.addEventListener("keyup", function(event)
+{
+  switch(event.keyCode)
+  {   
+	  case LEFT:
+	    moveLeft = false;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = false;
+	    break; 
+	    
+	  case SPACE:
+  	  jump = false;
+  	  break;  
+  }
+}, false);
+
+update();
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function playGame()
+{ 
+  //Left
+  if(moveLeft && !moveRight)
+  {
+    cat.accelerationX = -0.2;
+    cat.friction = 1;
+  }
+  //Right
+  if(moveRight && !moveLeft)
+  {
+    cat.accelerationX = 0.2;
+    cat.friction = 1;
+  }
+  //Space
+  if(jump && cat.isOnGround)
+  {
+    cat.vy += cat.jumpForce;
+    cat.isOnGround = false;
+    cat.friction = 1;
+  }
+  
+  //Set the cat's acceleration, friction and gravity 
+  //to zero if none of the arrow keys are being pressed
+  if(!moveLeft && !moveRight)
+  {
+    cat.accelerationX = 0; 
+    cat.friction = 0.96; 
+    cat.gravity = 0.3;
+  }
+  	
+  //Apply the acceleration
+  cat.vx += cat.accelerationX; 
+  cat.vy += cat.accelerationY;
+  
+  //Apply friction
+  if(cat.isOnGround)
+  {
+    cat.vx *= cat.friction; 
+  }
+  
+  //Apply gravity
+  cat.vy += cat.gravity;
+  
+  //Limit the speed
+  //Don't limit the upward speed because it will choke the jump effect.
+  if (cat.vx > cat.speedLimit)
+  {
+    cat.vx = cat.speedLimit;
+  }
+  if (cat.vx < -cat.speedLimit)
+  {
+    cat.vx = -cat.speedLimit;
+  } 
+  if (cat.vy > cat.speedLimit * 2)
+  {
+    cat.vy = cat.speedLimit * 2;
+  }
+
+  //Move the cat
+  cat.x += cat.vx;
+  cat.y += cat.vy;
+  
+  //Bounce off the screen edges
+  //Left
+  if(cat.x < 0)
+  {
+    cat.vx *= cat.bounce;
+    cat.x = 0;
+  }
+  //Top
+  if(cat.y < 0)
+  {
+    cat.vy *= cat.bounce;
+    cat.y = 0;
+  }
+  //Right
+  if(cat.x + cat.width > canvas.width)
+  {
+    cat.vx *= cat.bounce;
+    cat.x = canvas.width - cat.width;
+  }
+  //Bottom
+  if(cat.y + cat.height > canvas.height)
+  {
+    cat.y = canvas.height - cat.height;
+    cat.isOnGround = true;
+    cat.vy = -cat.gravity;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

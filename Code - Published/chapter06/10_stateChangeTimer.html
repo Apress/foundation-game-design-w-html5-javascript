@@ -1,0 +1,66 @@
+<!doctype html>
+<title>State change timer</title>
+
+<canvas width="64" height="64"></canvas>
+
+<script type="text/javascript">
+
+var monster =
+{
+  //The monster's image
+  image: "monsterStates.png",
+  
+  //The monster's states
+  NORMAL: 0,
+  SCARED: 1,
+  
+  //Set its initial state
+  state: 0
+};
+
+//Set up the canvas and drawing surface
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//Load the monster's image
+var monsterImage = new Image();
+monsterImage.addEventListener("load", render, false);
+monsterImage.src = monster.image;
+
+//Change the monster's state by pressing a key
+window.addEventListener("keydown", keydownHandler, false);
+
+function keydownHandler(event)
+{
+  //When a key is pressed, change the
+  //monster's state   
+  becomeScared();
+}
+
+function becomeScared()
+{
+  monster.state = monster.SCARED;
+  setTimeout(becomeNormal, 1000);
+  render();
+}
+
+function becomeNormal()
+{
+  monster.state = monster.NORMAL;
+  render();
+}
+
+function render()
+{
+  
+  drawingSurface.drawImage
+  (
+    monsterImage, 
+    64 * monster.state, 0, 64, 64, 
+    0, 0, 64, 64
+  );
+  
+}
+
+</script>
+

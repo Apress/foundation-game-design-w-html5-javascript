@@ -1,0 +1,367 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Tank</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+//*** Note: this spriteObject uses an additional Boolean property called 
+//accerate which is used to determine when the tank should accelerate
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  rotation: 0,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0,
+  rotationSpeed: 0,
+  accelerate: false,
+  speed: 0,
+  speedLimit: 5, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var bullets = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The mouse
+var mouseX = 0;
+var mouseY = 0;
+
+//Hide the mouse
+//canvas.style.cursor = "none";
+
+//The tank
+var tank = Object.create(spriteObject);
+tank.sourceX = 128;
+tank.x = canvas.width / 2 - tank.halfWidth();
+tank.y = canvas.height / 2 - tank.halfHeight();
+sprites.push(tank);
+
+//The turret
+var turret = Object.create(spriteObject);
+turret.sourceX = 192;
+turret.x = tank.x;
+turret.y = tank.y;
+sprites.push(turret);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/vehicles.png";
+assetsToLoad.push(image);
+
+//Add listeners
+window.addEventListener("keydown", keydownHandler, false);
+window.addEventListener("keyup", keyupHandler, false);
+canvas.addEventListener("mousemove", mousemoveHandler, false);
+canvas.addEventListener("mousedown", mousedownHandler, false);
+
+//The tankAngle between the mouse and the center of the tank
+var tankAngle = 0;
+var turretAngle = 0;
+
+//Arrow key codes
+var UP = 38;
+var RIGHT = 39;
+var LEFT = 37;
+
+//Tank actions
+var rotateLeft = false;
+var rotateRight = false;
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function mousemoveHandler(event)
+{ 
+  //Find the mouse's x and y position.
+  //Subtract the canvas's top and left offset
+  mouseX = event.pageX - canvas.offsetLeft;
+  mouseY = event.pageY - canvas.offsetTop;
+}
+
+function mousedownHandler(event)
+{ 
+  //Create a bullet sprite
+  var bullet = Object.create(spriteObject);
+  bullet.sourceX = 256;
+  bullet.sourceWidth = 10;
+  bullet.sourceHeight = 10;
+  bullet.width = 10;
+  bullet.height = 10;
+  
+  //Center it over the turret
+  var radius = 32;
+	bullet.x 
+	  = turret.x + turret.halfWidth() - bullet.halfWidth()
+	  + (radius * Math.cos(turretAngle));
+	  
+	bullet.y 
+	  = turret.y + turret.halfHeight() - bullet.halfHeight()
+	  + (radius * Math.sin(turretAngle));
+  
+  //Set its speed
+  bullet.vx = Math.cos(turretAngle) * 7;
+  bullet.vy = Math.sin(turretAngle) * 7;
+
+  //Push the bullet into both the sprites and bullets arrays
+  sprites.push(bullet);
+  bullets.push(bullet);
+}
+
+function keydownHandler(event)
+{
+	switch (event.keyCode) 
+  {
+    case LEFT: 
+      rotateLeft = true;
+      break;
+		
+    case RIGHT: 
+      rotateRight = true;
+      break;
+		
+    case UP:
+      tank.accelerate = true;
+  }
+}
+
+function keyupHandler(event)
+{
+	switch (event.keyCode) 
+  {
+    case LEFT: 
+      rotateLeft = false;
+      break;
+		
+    case RIGHT: 
+      rotateRight = false;
+      break;
+		
+    case UP: 
+      tank.accelerate = false;
+  }
+}
+
+function playGame()
+{ 
+  //--- The tank
+  //Rotate left
+  if(rotateLeft && !rotateRight)
+  {
+    tank.rotationSpeed = -3; 
+  }
+  //Rotate right
+  if(rotateRight && !rotateLeft)
+  {
+    tank.rotationSpeed = 3; 
+  }
+  //Stop the tank from rotating if no arrow keys are press
+  if(!rotateRight && !rotateLeft)
+  {
+    tank.rotationSpeed = 0; 
+  }
+  
+  //Accelerate the tank if the space key is pressed
+	if(tank.accelerate)
+	{
+	  //Increase the tank's speed if it's under the speed limit
+	  if(tank.speed < tank.speedLimit)
+	  {
+		  tank.speed += 0.1;
+		}
+		//Add some optional drag
+		//tank.speed *= tank.friction; 
+	}
+	else
+	{
+		//Add friction to the speed if the tank is 
+		//not accelerating
+		tank.speed *= tank.friction; 
+	}
+	
+	//Calculate the acceleration based on the tankAngle of rotation
+	tankAngle = tank.rotation  * (Math.PI / 180); 
+	
+	tank.accelerationX = tank.speed * Math.cos(tankAngle); 
+	tank.accelerationY = tank.speed * Math.sin(tankAngle);
+	
+	//Update the tank's velocity
+	tank.vx = tank.accelerationX; 
+	tank.vy = tank.accelerationY;
+	
+	//Move and rotate the tank
+	tank.x += tank.vx;
+	tank.y += tank.vy;
+	tank.rotation += tank.rotationSpeed;
+	
+	//--- The turret
+	turret.x = tank.x;
+	turret.y = tank.y;
+	
+	//Find the angle between the center of the turret and the mouse
+  turretAngle = Math.atan2(mouseY - turret.centerY(), mouseX - turret.centerX());
+	  
+	//Convert the angle's radians into rotation degrees
+  turret.rotation = turretAngle * (180 / Math.PI);
+	
+	//--- The bullets
+	
+	//Move the bullets
+  for(var i = 0; i < bullets.length; i++)
+  {
+    var bullet = bullets[i];
+    
+    //Move it    
+    bullet.x += bullet.vx;
+    bullet.y += bullet.vy;
+    
+    //Remove the bullet if it crosses the top of the screen
+    if (bullet.centerY() < 0
+    || bullet.centerX() < 0
+    || bullet.centerX() > canvas.width
+    || bullet.centerY() > canvas.height)
+    { 
+      //Remove the bullet from the bullets array
+      removeObject(bullet, bullets);
+ 
+      //Remove the bullet from the sprites array
+      removeObject(bullet, sprites);
+      
+      //Reduce the loop counter by 1 to compensate 
+      //for the removed element
+      i--;
+    }
+  }
+}
+
+function removeObject(objectToRemove, array) 
+{ 
+  var i = array.indexOf(objectToRemove);
+  if (i !== -1)
+  {
+    array.splice(i, 1);
+  }
+}
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	    var sprite = sprites[i];
+	     
+	    //Save the current state of the drawing surface
+	    //before it's rotated
+	    drawingSurface.save();
+	  
+	    //Rotate the canvas
+    	drawingSurface.translate
+    	(
+    	  Math.floor(sprite.x + sprite.halfWidth()), 
+    	  Math.floor(sprite.y + sprite.halfHeight())
+    	);
+	    drawingSurface.rotate(sprite.rotation * Math.PI / 180);
+    
+	    if(sprite.visible)
+	    {
+		    drawingSurface.drawImage
+		    (
+		      image, 
+		      sprite.sourceX, sprite.sourceY, 
+		      sprite.sourceWidth, sprite.sourceHeight,
+		      Math.floor(-sprite.halfWidth()), Math.floor(-sprite.halfHeight()), 
+		      sprite.width, sprite.height
+		    );
+	    }
+	     
+      //Restore the drawing surface to its 
+      //state before it was rotated
+      drawingSurface.restore();
+	  }
+  }
+}
+
+</script>

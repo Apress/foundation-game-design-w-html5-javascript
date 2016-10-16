@@ -1,0 +1,190 @@
+<!doctype html>
+<title>Better scrolling</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black">
+
+<script type="text/javascript">
+
+//--- The sprite object
+
+var sprite =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  x: 0,
+  y: 0,
+  height: 64,
+  width: 64
+};
+
+//--- The main program
+
+//the canvas and its drawing surfave
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//An array to store the sprites
+var sprites = [];
+
+//Create the background sprite
+var background = Object.create(spriteObject);
+background.sourceY = 64;
+background.sourceWidth = 2561;
+background.sourceHeight = 1922;
+background.width = 2561;
+background.height = 1922;
+background.x = -(background.width - canvas.width) / 2; 
+background.y = -(background.height - canvas.height) / 2;
+sprites.push(background);
+
+//Create the cat sprite and center it
+var cat = Object.create(spriteObject);
+cat.x = 243;
+cat.y = 168;
+sprites.push(cat);
+
+//Load the image
+var image = new Image();
+image.src = "phobosTileSheet.png";
+image.addEventListener("load", loadHandler, false);
+
+//Add a keyboard listener
+window.addEventListener("keydown", keydownHandler, false);
+window.addEventListener("keyup", keyupHandler, false);
+
+//Arrow key codes
+var UP = 38;
+var DOWN = 40;
+var RIGHT = 39;
+var LEFT = 37;
+
+//Variables for the inner boundary
+var rightInnerBoundary = (canvas.width / 2) + (canvas.width / 4);
+var leftInnerBoundary = (canvas.width / 2) - (canvas.width / 4);
+var topInnerBoundary = (canvas.height / 2) - (canvas.height / 4);
+var bottomInnerBoundary = (canvas.height / 2) + (canvas.height / 4);
+
+//General vx and vy variables to 
+//control the movement of the cat and background
+var vx = 0;
+var vy = 0;
+
+function keydownHandler(event)
+{ 
+  switch(event.keyCode)
+  {
+    case UP:
+	    vy = -5;
+	    break;
+	  
+	  case DOWN:
+	    vy = 5;
+	    break;
+	    
+	  case LEFT:
+	    vx = -5;
+	    break;  
+	    
+	  case RIGHT:
+	    vx = 5;
+	    break; 
+  }
+}
+
+function keyupHandler(event)
+{ 
+  if(event.keyCode === LEFT
+  || event.keyCode === RIGHT)
+  {
+    vx = 0; 
+  }
+  else if(event.keyCode === DOWN
+  || event.keyCode === UP)
+  {
+    vy = 0;
+  }
+}
+
+function loadHandler()
+{
+  //Start the animation loop
+  setInterval(update, 16);
+}
+
+function update()
+{
+  //Move the cat
+  cat.x += vx;
+  cat.y += vy;
+  
+  //Check whether the cat has moved to the edges of the inner boundary
+  if(cat.x < leftInnerBoundary)
+  {
+    cat.x = leftInnerBoundary;
+    background.x -= vx;
+    rightInnerBoundary = (canvas.width / 2) + (canvas.width / 4);
+  }
+  if(cat.x + cat.width > rightInnerBoundary)
+  {
+    cat.x = rightInnerBoundary - cat.width;
+    background.x -= vx;
+    leftInnerBoundary = (canvas.width / 2) - (canvas.width / 4);
+  }
+  if(cat.y < topInnerBoundary)
+  {
+    cat.y = topInnerBoundary;
+    background.y -= vy;
+    bottomInnerBoundary = (canvas.height / 2) + (canvas.height / 4);
+  }
+  if(cat.y + cat.height  > bottomInnerBoundary)
+  {
+    cat.y = bottomInnerBoundary - cat.height;
+    background.y -= vy;
+    topInnerBoundary = (canvas.height / 2) - (canvas.height / 4);
+  }
+  
+  //Check the background's canvas boundaries
+  if(background.x > 0)
+  {
+    background.x = 0;
+    leftInnerBoundary = 0;
+  }
+  if(background.y > 0)
+  {
+    background.y = 0;
+    topInnerBoundary = 0
+  }
+  if(background.x < canvas.width - background.width)
+  {
+    background.x = canvas.width - background.width;
+    rightInnerBoundary = canvas.width;
+  }
+  if(background.y < canvas.height - background.height)
+  {
+    background.y = canvas.height - background.height;
+    bottomInnerBoundary = canvas.height;
+  }
+
+  render();
+}
+
+function render(event)
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for(var i = 0; i < sprites.length; i++)
+  {
+     var sprite = sprites[i];
+     drawingSurface.drawImage
+     (
+       image, 
+       sprite.sourceX, sprite.sourceY, 
+       sprite.sourceWidth, sprite.sourceHeight,
+       sprite.x, sprite.y, 
+       sprite.width, sprite.height
+     ); 
+  }
+}
+</script>

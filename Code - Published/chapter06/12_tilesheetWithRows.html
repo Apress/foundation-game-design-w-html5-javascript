@@ -1,0 +1,87 @@
+<!doctype html>
+<title>Tilesheet with rows</title>
+
+<canvas width="128" height="128"></canvas>
+
+<script>
+
+//Create the monster object
+
+var monster =
+{
+  //The tilesheet image, its size, and the number of columns it has
+  IMAGE: "monsterTileSheet.png",
+  SIZE: 128,
+  COLUMNS: 3,
+  
+  //The numbers of the animation frames and the starting frame
+  numberOfFrames: 5,
+  currentFrame: 0,
+  
+  //Properties of the animation cell's x and
+  //y positions on the tile sheet.
+  //They're 0 when this object first loads
+  sourceX: 0,
+  sourceY: 0,
+    
+  //The monster's updateAnimation method
+  updateAnimation: function()
+  { 
+    //Find the frame's correct column and row
+    //on the tilesheet
+    this.sourceX 
+      = Math.floor(this.currentFrame % this.COLUMNS) * this.SIZE;
+    this.sourceY 
+      = Math.floor(this.currentFrame / this.COLUMNS) * this.SIZE;
+     
+    if(this.currentFrame < this.numberOfFrames)
+    {
+      //Advance currentFrame by 1
+      this.currentFrame++;
+    }
+  }
+};
+
+//Set up the canvas and drawing surface
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//Load the animation tile sheet
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = monster.IMAGE;
+
+function loadHandler()
+{ 
+  //Start the animation
+  updateAnimation();
+}
+
+function updateAnimation()
+{ 
+  //Set a timer to call updateAnimation every 300 milliseconds
+  setTimeout(updateAnimation, 300);
+  
+  //Update the monster's animation frames
+  monster.updateAnimation();
+  
+  //Render the animation
+  render();
+}
+
+function render()
+{
+  //Clear the canvas of any previous frames
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Draw the monster's current animation frame  
+  drawingSurface.drawImage
+  (
+    image, 
+    monster.sourceX, monster.sourceY, monster.SIZE, monster.SIZE, 
+    0, 0, monster.SIZE, monster.SIZE
+  );
+}
+
+</script>
+

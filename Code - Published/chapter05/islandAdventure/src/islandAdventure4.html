@@ -1,0 +1,240 @@
+<!doctype html>
+<title>Island Adventure 1</title>
+
+<style>
+
+#stage 
+{
+  position: relative;
+  width: 384px;
+  height: 384px;
+  background-image: url("../images/background.png");
+}
+
+.cell
+{
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+}
+
+p
+{
+  width: 400px;
+}
+
+</style>
+
+
+<div id="stage"></div>
+<p id="output"></p>
+
+<script>
+
+//Get a reference to the stage and output
+var stage = document.querySelector("#stage");
+var output = document.querySelector("#output");
+
+//Add a keyboard listener
+window.addEventListener("keydown", keydownHandler, false);
+
+//The game map
+var map =
+[
+  [0, 2, 0, 0, 0, 3],
+  [0, 0, 0, 1, 0, 0],
+  [0, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 2, 0],
+  [0, 2, 0, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0]
+];
+
+//The game objects map
+var gameObjects =
+[
+  [0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0],
+  [4, 0, 0, 0, 0, 0]
+];
+
+//Map code
+var WATER = 0;
+var ISLAND = 1;
+var PIRATE = 2;
+var HOME = 3;
+var SHIP = 4;
+
+//The size of each cell
+var SIZE = 64;
+
+//The number of rows and columns
+var ROWS = map.length;
+var COLUMNS = map[0].length;
+
+//Arrow key codes
+var UP = 38;
+var DOWN = 40;
+var RIGHT = 39;
+var LEFT = 37;
+
+//An automatic way of setting the ship's start position
+var shipRow;
+var shipColumn;
+
+for(var row = 0; row < ROWS; row++) 
+{	
+  for(var column = 0; column < COLUMNS; column++) 
+  {
+    if(gameObjects[row][column] === SHIP)
+    { 
+      shipRow = row;
+      shipColumn = column;
+    }
+  }
+}
+
+render();
+
+function keydownHandler(event)
+{
+  switch(event.keyCode)
+  {
+    case UP:
+      
+      //Find out if the ship's move will
+      //be within the playing field
+	    if(shipRow > 0)
+	    {
+	      //If it is,
+        //Clear the ship's current cell
+	      gameObjects[shipRow][shipColumn] = 0;
+	      
+	      //Subract 1 from the ship's row
+	      //to move it up one row on the map
+	      shipRow--;
+	      
+	      //Apply the ship's new updated position to the array
+	      gameObjects[shipRow][shipColumn] = SHIP;
+	    }
+	    break;
+	  
+	  case DOWN:
+	    if(shipRow < ROWS - 1)
+	    {
+	      gameObjects[shipRow][shipColumn] = 0;
+	      shipRow++;
+	      gameObjects[shipRow][shipColumn] = SHIP;
+	    }
+	    break;
+	    
+	  case LEFT:
+	    if(shipColumn > 0)
+	    {
+	      gameObjects[shipRow][shipColumn] = 0;
+	      shipColumn--;
+	      gameObjects[shipRow][shipColumn] = SHIP;
+	    }
+	    break;  
+	    
+	  case RIGHT:
+	    if(shipColumn < COLUMNS - 1)
+	    {
+	      gameObjects[shipRow][shipColumn] = 0;
+	      shipColumn++;
+	      gameObjects[shipRow][shipColumn] = SHIP;
+	    }
+	    break; 
+  }
+  
+  //find out what kind of cell the ship is on
+  switch(map[shipRow][shipColumn])
+  {
+    case WATER:
+      console.log("water");
+      break;
+    
+    case PIRATE:
+      console.log("pirate");
+      break; 
+    
+    case ISLAND:
+      console.log("island");
+      break; 
+      
+    case HOME:
+      console.log("home");
+      break;    
+  }
+  
+  //Render the game
+  render();
+}
+
+function render()
+{
+  //Clear the stage of img cells
+  //from the previous turn
+  
+  if(stage.hasChildNodes())
+  {
+    for(var i = 0; i < ROWS * COLUMNS; i++) 
+    {	 
+      stage.removeChild(stage.firstChild);
+    }
+  }
+  
+  //Render the game by looping through the map arrays
+  for(var row = 0; row < ROWS; row++) 
+  {	
+    for(var column = 0; column < COLUMNS; column++) 
+    { 
+      //Create a img tag called cell
+      var cell = document.createElement("img");
+
+      //Set it's CSS class to "cell"
+      cell.setAttribute("class", "cell");
+
+      //Add the img tag to the <div id="stage"> tag
+      stage.appendChild(cell);
+
+      //Find the correct image for this map cell
+      switch(map[row][column])
+      {
+        case WATER:
+          cell.src = "../images/water.png";
+          break;
+
+        case ISLAND:
+          cell.src = "../images/island.png";
+          break; 
+
+        case PIRATE:
+          cell.src = "../images/pirate.png";
+          break; 
+
+        case HOME:
+          cell.src = "../images/home.png";
+          break;   
+      }  
+      
+      //Add the ship from the gameObjects array
+	    switch(gameObjects[row][column])
+	    {
+	      case SHIP:
+	        cell.src = "../images/ship.png";
+	        break;   
+	    } 
+  
+      //Position the cell 
+      cell.style.top = row * SIZE + "px";
+      cell.style.left = column * SIZE + "px";
+    }
+  }
+}
+
+</script>
+

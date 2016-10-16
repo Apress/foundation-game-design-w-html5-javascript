@@ -1,0 +1,111 @@
+<!doctype html>
+<title>The Forest of Lyrica - 2</title>
+
+<p id="output"></p>
+<input id="input" type="text" placeholder="Enter your action…"> 
+<button>enter</button>
+
+<script>
+
+//Create the map
+var map = [];
+
+map[0] = "An old stone keep.";
+map[1] = "A deep well.";
+map[2] = "A sunny glade.";
+map[3] = "A sleeping dragon.";
+map[4] = "A narrow pathway.";
+map[5] = "An ancient gate.";
+map[6] = "The edge of a river.";
+map[7] = "A lonely wooden bench.";
+map[8] = "An isolated cottage. Faint music comes from inside.";
+
+//Set the player's start location
+var mapLocation = 4;
+
+//Initialize the player's input
+var playersInput = "";
+
+//Initialize the gameMessage
+var gameMessage = "";
+
+//Create an array of actions the game understands
+//and a variable to store the current action
+var actionsIKnow = ["north", "east", "south", "west"];
+var action = "";
+
+//The input and output fields
+var output = document.querySelector("#output");
+var input = document.querySelector("#input");
+
+//The button
+var button = document.querySelector("button");
+button.style.cursor = "pointer";
+button.addEventListener("click", clickHandler, false);
+
+//Display the player's location
+render();
+
+function clickHandler()
+{
+  playGame();
+}
+
+function playGame()
+{
+  //Get the player's input and convert it to lowercase
+  playersInput = input.value;
+  playersInput = playersInput.toLowerCase();
+  
+  //Reset these variables from the previous turn
+  gameMessage = "";
+  action = "";
+  
+  //Figure out the player's action
+  for(i = 0; i < actionsIKnow.length; i++)
+  {
+    if(playersInput.indexOf(actionsIKnow[i]) !== -1)
+    {
+      action = actionsIKnow[i];
+      console.log("player's action: " + action);
+      break;
+    }
+  }
+  
+  //Choose the correct action
+  switch(action)
+  {
+    case "north":
+      mapLocation -= 3;
+      break;
+    
+    case "east":
+      mapLocation += 1;
+      break;
+      
+    case "south":
+      mapLocation += 3;
+      break;
+      
+    case "west":
+      mapLocation -= 1;
+      break;
+    		  
+		default:
+		  gameMessage = "I don't understand that.";
+  }
+  
+  //Render the game
+  render();
+}
+
+function render()
+{
+  //Render the location
+  output.innerHTML = map[mapLocation];
+  
+  //Display the game message
+  output.innerHTML += "<br><em>" + gameMessage + "</em>";
+}
+
+</script>

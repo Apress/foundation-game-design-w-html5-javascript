@@ -1,0 +1,147 @@
+<!doctype html>
+<title>Many Image files</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script>
+
+//--- The sprite object
+
+var spriteObject =
+{
+  //The name of the sprite's image file
+  image: "",
+  
+  //The x and y source position of the image
+  //And its height and width
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  
+  //Its destination height and width, and x and y position
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+};
+
+//--- The main program
+
+//the canvas and its drawing surfave
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//An array to store the sprites
+var sprites = [];
+
+//An array to store the images that will be loaded and
+//a variable that will used to count them as they load
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//Create the background sprite.
+//Position it at the top left corner of the canvas 
+//and push it into the sprites array
+var background = Object.create(spriteObject);
+background.sourceWidth = 550;
+background.sourceHeight = 400;
+background.width = 550;
+background.height = 400;
+background.x = 0;
+background.y = 0;
+sprites.push(background);
+
+//Create the background image and push it into the images array
+var backgroundImage = new Image();
+backgroundImage.addEventListener("load", loadHandler, false);
+backgroundImage.src = "background.png";
+assetsToLoad.push(backgroundImage);
+
+//Create the cat sprite.
+//Position it on the canvas and push it into the sprites array
+var cat = Object.create(spriteObject);
+cat.x = 0;
+cat.y = 168;
+sprites.push(cat);
+
+//Create the cat image and push it into the images array
+var catImage = new Image();
+catImage.addEventListener("load", loadHandler, false);
+catImage.src = "cat.png";
+assetsToLoad.push(catImage);
+
+//Create the tiger sprite, position it
+//and push it into the sprites array
+var tiger = Object.create(spriteObject);
+tiger.x = 300;
+tiger.y = 336;
+sprites.push(tiger);
+
+//Create the tiger image and push it into the images array
+var tigerImage = new Image();
+tigerImage.addEventListener("load", loadHandler, false);
+tigerImage.src = "tiger.png";
+assetsToLoad.push(tigerImage);
+
+function loadHandler()
+{
+  //Each time an image loads, 1 is added to assetsLoaded
+  assetsLoaded++;
+  
+  //When assetsLoaded matches the number of images in the
+  //assetsToLoad array, a loop assigns the image to the sprite
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    //Assign the images to the sprites
+    for(var i = 0; i < assetsToLoad.length; i++)
+    {
+      sprites[i].image = assetsToLoad[i];
+    }
+    
+    //Call the update function to start the animation
+    update();
+  }
+}
+
+function update()
+{
+  //Set this update function to loop at 60 frames per second
+  requestAnimationFrame(update, canvas);
+  
+  //Make the cat move right
+  cat.x++;
+  
+  //Make the tiger move up
+  tiger.y--;
+  
+  //Render the game
+  render();
+}
+
+function render()
+{ 
+  //Clear the previous animation frame
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Loop through all the sprites and use 
+  //their properties to display them
+  if(sprites.length !== 0)
+  {
+    for(var i = 0; i < sprites.length; i++)
+    {
+      var sprite = sprites[i];
+      drawingSurface.drawImage
+      (
+        sprite.image, 
+        sprite.sourceX, sprite.sourceY, 
+        sprite.sourceWidth, sprite.sourceHeight,
+        Math.floor(sprite.x), Math.floor(sprite.y), 
+        sprite.width, sprite.height
+      ); 
+    }
+  }
+}
+
+</script>

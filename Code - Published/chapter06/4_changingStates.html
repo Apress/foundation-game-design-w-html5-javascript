@@ -1,0 +1,32 @@
+<!doctype html>
+<title>Changing states</title>
+
+<script>
+
+var monster =
+{
+  //Define the monster's states  
+  NORMAL: 0,
+  SCARED: 1,
+  
+  //Set its initial state
+  state: 0
+};
+
+//Display the monster's initial state
+console.log("The monster's initial state: " + monster.state);
+
+//Change the monsters state by pressing a key
+window.addEventListener("keydown", keydownHandler, false);
+
+function keydownHandler(event)
+{
+  //Change the monster's state
+  monster.state = monster.SCARED;
+  
+  //Display the new state
+  console.log("The monster's new state: " + monster.state);
+}
+
+</script>
+

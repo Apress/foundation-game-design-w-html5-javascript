@@ -1,0 +1,163 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Follow</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script>
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  height: 64,
+  width: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The mouse
+var mouseX = 0;
+var mouseY = 0;
+
+//Hide the mouse
+canvas.style.cursor = "none";
+
+//The fairy
+var fairy = Object.create(spriteObject);
+fairy.sourceWidth = 77;
+fairy.width = 77;
+fairy.x = canvas.width / 2 - fairy.halfWidth();
+fairy.y = canvas.height / 2 - fairy.halfHeight();
+console.log(fairy.x);
+sprites.push(fairy);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/buttonFairy.png";
+assetsToLoad.push(image);
+
+//Add a mouse listener
+canvas.addEventListener("mousemove", mousemoveHandler, false);
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function mousemoveHandler(event)
+{ 
+  //Find the mouse's x and y position.
+  //Subtract the canvas's top and left offset
+  mouseX = event.pageX - canvas.offsetLeft;
+  mouseY = event.pageY - canvas.offsetTop;
+}
+function playGame()
+{ 
+  fairy.x = mouseX - (fairy.halfWidth()); 
+	fairy.y = mouseY - (fairy.halfHeight());
+}
+
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

@@ -1,0 +1,182 @@
+<!doctype html>
+<title>Keyboard control with an array</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script>
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  x: 0,
+  y: 0,
+  width: 64,
+  height: 64,
+  vx: 0,
+  vy: 0
+};
+
+//--- The main program
+
+//The canvas and its drawing surface
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//An array to store the sprites
+var sprites = [];
+
+//Create the cat sprite and center it
+var cat = Object.create(spriteObject);
+cat.x = 243;
+cat.y = 168;
+sprites.push(cat);
+
+//Load the image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "cat.png";
+
+/*
+Create a "keys" object to keep all the key-specific stuff contained.
+It has a array called pressedKeys that stores all the current keys are are
+being held down. It also has a keyIsPressed method that returns "true" if the
+key sent to it exists in the pressedKeys array
+*/
+
+var keys =
+{
+  //The key code numbers
+  UP: 38,
+  DOWN: 40,
+  RIGHT: 39,
+  LEFT: 37,
+  
+  //An array to store all the currently pressed keys
+  pressedKeys: [],
+  
+  //A function that returns true if the key code number sent to it
+  //exists in the pressedKeys array. indexOf will be -1 if the key code 
+  //is not found in the array. If indexOf isn't -1, it means that 
+  //it's found a the key code in the array, and so it returns "true"
+  keyIsPressed: function(key)
+  {
+    if(this.pressedKeys.indexOf(key) !== -1)
+    {
+      return true;
+    }
+  }
+}
+
+//Keyboard listeners
+window.addEventListener("keydown", function(event)
+{
+  //Find the key being pressed and add it to the keys.pressedKeys array
+  //if it hasn't already been added.
+  if(event.keyCode === keys.UP || event.keyCode === keys.DOWN
+  || event.keyCode === keys.RIGHT  || event.keyCode === keys.LEFT)
+  {
+    var key = keys.pressedKeys.indexOf(event.keyCode);
+    if(key === -1) 
+    {
+      keys.pressedKeys.push(event.keyCode);
+    }
+  }
+}, false);
+
+window.addEventListener("keyup", function(event)
+{
+  //Remove the key from the keys.pressedKeys array
+  var key = keys.pressedKeys.indexOf(event.keyCode);
+  if(key !== -1) 
+  {
+    keys.pressedKeys.splice(key, 1);
+  }
+}, false);
+
+function loadHandler()
+{ 
+  update();
+}
+
+function update()
+{
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //The code that moves the cat uses the key object's keyIsPressed method
+  //To find out which keys are being pressed. key.keyIsPressed will be 
+  //"true" if it finds a match in the keys.pressedKeys array.
+  //Up
+  if(keys.keyIsPressed(keys.UP) && !keys.keyIsPressed(keys.DOWN))
+  {
+    cat.vy = -5;
+  }
+  //Down
+  if(keys.keyIsPressed(keys.DOWN) && !keys.keyIsPressed(keys.UP))
+  {
+    cat.vy = 5;
+  }
+  //Left
+  if(keys.keyIsPressed(keys.LEFT) && !keys.keyIsPressed(keys.RIGHT))
+  {
+    cat.vx = -5;
+  }
+  //Right
+  if(keys.keyIsPressed(keys.RIGHT) && !keys.keyIsPressed(keys.LEFT))
+  {
+    cat.vx = 5;
+  }
+  
+  //Set the cat's vy to zero if neither the up or down keys are being pressed
+  if(!keys.keyIsPressed(keys.UP)
+  && !keys.keyIsPressed(keys.DOWN))
+  {
+    cat.vy = 0;
+  }
+  
+  //Set the cat's vx to zero if neither the right or left keys are being pressed
+  if(!keys.keyIsPressed(keys.RIGHT)
+  && !keys.keyIsPressed(keys.LEFT))
+  {
+    cat.vx = 0;
+  }
+  	
+  //Move the cat
+  cat.x += cat.vx;
+  cat.y += cat.vy;
+  
+  //Render the sprite
+  render();
+}
+
+function render()
+{ 
+  //Clear the previous animation frame
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Loop through all the sprites and use 
+  //their properties to display them
+  if(sprites.length !== 0)
+  {
+    for(var i = 0; i < sprites.length; i++)
+    {
+      var sprite = sprites[i];
+      drawingSurface.drawImage
+      (
+        image, 
+        sprite.sourceX, sprite.sourceY, 
+        sprite.sourceWidth, sprite.sourceHeight,
+        Math.floor(sprite.x), Math.floor(sprite.y), 
+        sprite.width, sprite.height
+      ); 
+    }
+  }
+}
+
+</script>

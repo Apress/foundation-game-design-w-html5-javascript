@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Constructor function</title>
+
+<script>
+
+//A basic object with a property and a method
+function Robot() 
+{
+    this.mood = "happy";
+}
+Robot.prototype.displayMood = function() 
+{
+    console.log("I am feeling " + this.mood);
+};
+
+//Use a constructor function to make a newRobot object from the original
+var newRobot = new Robot();
+
+//View the newRobot's mood property
+console.log(newRobot.mood);
+
+//Call the newRobot's displayMood method
+newRobot.displayMood();
+
+</script>

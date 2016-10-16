@@ -1,0 +1,391 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Circle bounce</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Platform game properties   
+  isOnGround: undefined,
+  jumpForce: -10,
+
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//Create the red circle 
+var redCircle = Object.create(spriteObject);
+redCircle.x = 350;
+redCircle.y = 100;
+redCircle.height = 100;
+redCircle.width = 100;
+sprites.push(redCircle);
+
+//Create the blue circle 
+var blueCircle = Object.create(spriteObject);
+blueCircle.sourceX = 64;
+blueCircle.x = 150;
+blueCircle.y = 250;
+sprites.push(blueCircle);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "circles.png";
+assetsToLoad.push(image);
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+//Arrow key codes
+var UP = 38;
+var DOWN = 40;
+var RIGHT = 39;
+var LEFT = 37;
+
+//Directions
+var moveUp = false;
+var moveDown = false;
+var moveRight = false;
+var moveLeft = false;
+
+//Add keyboard listeners
+window.addEventListener("keydown", function(event)
+{
+  switch(event.keyCode)
+  {
+    case UP:
+	    moveUp = true;
+	    break;
+	  
+	  case DOWN:
+	    moveDown = true;
+	    break;
+	    
+	  case LEFT:
+	    moveLeft = true;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = true;
+	    break; 
+  }
+}, false);
+
+window.addEventListener("keyup", function(event)
+{
+  switch(event.keyCode)
+  {
+    case UP:
+	    moveUp = false;
+	    break;
+	  
+	  case DOWN:
+	    moveDown = false;
+	    break;
+	    
+	  case LEFT:
+	    moveLeft = false;
+	    break;  
+	    
+	  case RIGHT:
+	    moveRight = false;
+	    break; 
+  }
+}, false);
+
+update();
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function playGame()
+{ 
+  //Set the blueCircle's acceleration if the keys are being pressed
+  //Up
+  if(moveUp && !moveDown)
+  {
+    blueCircle.accelerationY = -0.2;
+    blueCircle.friction = 1;
+  }
+  //Down
+  if(moveDown && !moveUp)
+  {
+    blueCircle.accelerationY = 0.2;
+    blueCircle.friction = 1;
+  }
+  //Left
+  if(moveLeft && !moveRight)
+  {
+    blueCircle.accelerationX = -0.2;
+    blueCircle.friction = 1;
+  }
+  //Right
+  if(moveRight && !moveLeft)
+  {
+    blueCircle.accelerationX = 0.2;
+    blueCircle.friction = 1;
+  }
+  
+  //Set the blueCircle's acceleration and friction to zero if none of the keys are being pressed
+  if(!moveUp && !moveDown)
+  {
+    blueCircle.accelerationY = 0;
+  }
+  if(!moveLeft && !moveRight)
+  {
+    blueCircle.accelerationX = 0; 
+  }
+  if(!moveUp && !moveDown && !moveLeft && !moveRight)
+  {
+    blueCircle.friction = 0.96; 
+  }
+  	
+  //Apply the acceleration
+  blueCircle.vx += blueCircle.accelerationX; 
+  blueCircle.vy += blueCircle.accelerationY;
+  
+  //Apply friction
+  blueCircle.vx *= blueCircle.friction; 
+  blueCircle.vy *= blueCircle.friction;
+
+  //Move the blueCircle
+  blueCircle.x += blueCircle.vx;
+  blueCircle.y += blueCircle.vy;
+  
+  //Bounce the circles
+  blockCircle(blueCircle, redCircle, true);
+  
+  //Bounce off the screen edges
+  //Left
+  if(blueCircle.x < 0)
+  {
+    blueCircle.vx *= blueCircle.bounce;
+    blueCircle.x = 0;
+  }
+  //Up
+  if(blueCircle.y < 0)
+  {
+    blueCircle.vy *= blueCircle.bounce;
+    blueCircle.y = 0;
+  }
+  //Right
+  if(blueCircle.x + blueCircle.width > canvas.width)
+  {
+    blueCircle.vx *= blueCircle.bounce;
+    blueCircle.x = canvas.width - blueCircle.width;
+  }
+  //Down
+  if(blueCircle.y + blueCircle.height > canvas.height)
+  {
+    blueCircle.vy *= blueCircle.bounce;
+    blueCircle.y = canvas.height - blueCircle.height;
+  }
+}
+
+function blockCircle(c1, c2, bounce)
+{  
+  //Set bounce to a default value of false if it's not specified
+  if(typeof bounce === "undefined")
+  {
+    bounce = false;
+  }
+  
+  //Calculate the vector between the circles’ center points
+  var vx = c1.centerX() - c2.centerX();
+  var vy = c1.centerY() - c2.centerY();
+  
+  //Find the distance between the circles by calculating
+  //the vector's magnitude (how long the vector is) 
+  var magnitude = Math.sqrt(vx * vx + vy * vy);
+  
+  //Add together the circles' combined half-widths
+  var combinedHalfWidths = c1.halfWidth() + c2.halfWidth();
+  
+  //Figure out if there's a collision
+  if(magnitude < combinedHalfWidths)
+  {
+    //Yes, a collision is happening.
+    //Find the amount of overlap between the circles 
+    var overlap = combinedHalfWidths - magnitude;
+    
+    //Normalize the vector.
+    //These numbers tell us the direction of the collision
+    dx = vx / magnitude;
+    dy = vy / magnitude;
+
+    //Move circle 1 out of the collision by multiplying
+    //the overlap with the normalized vector and add it to 
+    //circle 1's position
+    c1.x += overlap * dx; 
+    c1.y += overlap * dy;
+    
+    //Bounce    
+    if(bounce)
+    {
+      //Create a collision vector object to represent the bounce surface
+      var s = {};
+      
+      //Find the bounce surface's vx and vy properties
+      //(This represents the normal of the distance vector between the circles)
+      s.vx = vy; 
+      s.vy = -vx;
+    
+      //Bounce c1 off the surface
+      bounceOffSurface(c1, s);
+    }
+  }
+}
+
+//An optional function (not used in this example)
+function bounceOffSurface(o, s)
+{
+  //1. Calculate the collision surface's properties
+  
+  //Find the surface vector's left normal
+  s.lx = s.vy; 
+  s.ly = -s.vx;
+  
+  //Find its magnitude
+  s.magnitude = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+  
+  //Find its normalized values
+  s.dx = s.vx / s.magnitude;
+  s.dy = s.vy / s.magnitude;
+  
+  //2. Bounce the object (o) off the surface (s)
+  
+  //Find the dot product between the object and the surface
+  var dp1 = o.vx * s.dx + o.vy * s.dy;
+  
+  //Project the object's velocity onto the collision surface
+  var p1Vx = dp1 * s.dx; 
+  var p1Vy = dp1 * s.dy;
+  
+  //Find the dot product of the object and the surface's left normal (s.lx and s.ly)
+  var dp2 = o.vx * (s.lx / s.magnitude) + o.vy * (s.ly / s.magnitude); 
+  
+  //Project the object's velocity onto the surface's left normal
+  var p2Vx = dp2 * (s.lx / s.magnitude);
+  var p2Vy = dp2 * (s.ly / s.magnitude);
+  
+  //Reverse the projection on the surface's left normal
+  p2Vx *= -1; 
+  p2Vy *= -1;
+  
+  //Add up the projections to create a new bounce vector
+  var bounceVx = p1Vx + p2Vx;
+  var bounceVy = p1Vy + p2Vy;
+  
+  //Assign the bounce vector to the object's velocity
+  o.vx = bounceVx; 
+  o.vy = bounceVy;
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

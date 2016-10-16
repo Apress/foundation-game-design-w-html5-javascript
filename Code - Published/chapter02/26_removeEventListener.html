@@ -1,0 +1,21 @@
+<!doctype html>
+<title>Remove an event listener</title>
+
+<button>click me</button>
+
+<script>
+
+var button = document.querySelector("button");
+button.addEventListener("click", clickHandler, false);
+
+//Change the mouse arrow to pointing hand
+//button.style.cursor = "pointer";
+	
+function clickHandler()
+{
+  console.log("Button clicked");
+  button.removeEventListener("click", clickHandler, false);
+  button.style.display = "none";
+}
+	
+</script>

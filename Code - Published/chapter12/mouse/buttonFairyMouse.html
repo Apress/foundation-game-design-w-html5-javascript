@@ -1,0 +1,258 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Button Fairy</title>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+  
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var stars = [];
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The fairy
+var fairy = Object.create(spriteObject);
+fairy.sourceWidth = 77;
+fairy.width = 77;
+fairy.x = canvas.width / 2 - fairy.halfWidth();
+fairy.y = canvas.height / 2 - fairy.halfHeight();
+sprites.push(fairy);
+
+//The mouse
+var mouseX = fairy.x + fairy.halfWidth();
+var mouseY = fairy.y + fairy.halfHeight();
+
+//The wand
+var wand = Object.create(spriteObject);
+wand.sourceX = 128;
+wand.sourceWidth = 20;
+wand.sourceHeight = 20;
+wand.width = 20;
+wand.height = 20;
+wand.x = fairy.centerX() - 55;
+wand.y = fairy.centerY() - 55;
+sprites.push(wand);
+
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/buttonFairy.png";
+assetsToLoad.push(image);
+
+//Add mouse listeners
+canvas.addEventListener("mousemove", mousemoveHandler, false);
+canvas.addEventListener("mousedown", mousedownHandler, false);
+
+//The easing constant
+EASING = 0.1;
+
+//The angle between the mouse and the center of the fairy
+var angle = 0;
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function mousemoveHandler(event)
+{ 
+  //Find the mouse's x and y position.
+  //Subtract the canvas's top and left offset
+  mouseX = event.pageX - canvas.offsetLeft;
+  mouseY = event.pageY - canvas.offsetTop;
+}
+
+function mousedownHandler(event)
+{ 
+  //Create a star sprite
+  var star = Object.create(spriteObject);
+  star.sourceX = 192;
+  star.sourceWidth = 38;
+  star.sourceHeight = 38;
+  star.width = 38;
+  star.height = 38;
+  
+  //Center it over the wand
+  star.x = wand.centerX() - star.halfWidth();
+  star.y = wand.centerY() - star.halfHeight();
+  
+  //Set its speed
+  star.vx = Math.cos(angle) * 7;
+  star.vy = Math.sin(angle) * 7;
+
+  //Push the star into both the sprites and stars arrays
+  sprites.push(star);
+  stars.push(star);
+}
+
+function playGame()
+{ 
+
+  //Find the angle between the center of the fairy and the mouse
+  angle = Math.atan2(mouseY - fairy.centerY(), mouseX - fairy.centerX());
+	
+  //Move the wand around the fairy
+  var radius = 64;
+  wand.x = fairy.centerX() + (radius * Math.cos(angle)) - wand.halfWidth();
+  wand.y = fairy.centerY() + (radius * Math.sin(angle)) - wand.halfHeight();
+
+  //Figure out the distance between the mouse and the center of the fairy
+  vx = mouseX - fairy.centerX(); 
+  vy = mouseY - fairy.centerY();  
+  distance = Math.sqrt(vx * vx + vy * vy);
+	
+	//Move the fairy if it's more than 1 pixel away from the mouse 
+  if (distance >= 1)
+  {
+    fairy.x += vx * EASING; 
+    fairy.y += vy * EASING;
+  }
+  
+  //--- The stars
+  
+  //Move the stars
+  for(var i = 0; i < stars.length; i++)
+  {
+    var star = stars[i];
+    
+    //Move it    
+    star.x += star.vx;
+    star.y += star.vy;
+    
+    //Remove the star if it crosses the top of the screen
+    if (star.centerY() < 0
+    || star.centerX() < 0
+    || star.centerX() > canvas.width
+    || star.centerY() > canvas.height)
+    { 
+      //Remove the star from the stars array
+      removeObject(star, stars);
+ 
+      //Remove the star from the sprites array
+      removeObject(star, sprites);
+      
+      //Reduce the loop counter by 1 to compensate 
+      //for the removed element
+      i--;
+    }
+  }	
+}
+
+function removeObject(objectToRemove, array) 
+{ 
+  var i = array.indexOf(objectToRemove);
+  if (i !== -1)
+  {
+    array.splice(i, 1);
+  }
+}
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

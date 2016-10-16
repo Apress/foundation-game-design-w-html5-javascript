@@ -1,0 +1,88 @@
+<!doctype html>
+<title>Displaying an image with canvas</title>
+
+<style>
+
+canvas
+{
+  border: 1px dashed black;
+}
+
+</style>
+
+<canvas width="64" height="64"></canvas>
+
+<script>
+
+//1. Get a reference to the canvas
+var canvas = document.querySelector("canvas");
+
+//2. Get a reference to the canvas's drawing surface
+var drawingSurface = canvas.getContext("2d");
+
+//3. Create a monsterImage variable to hold the new image
+var monsterImage = new Image();
+
+//4. Add a listener to the image to call the 
+//render function when the image has loaded
+monsterImage.addEventListener("load", loadHandler, false);
+
+//5. Assign the image's src property to the image you want to load
+monsterImage.src = "monster.png";
+
+function loadHandler()
+{ 
+  
+  //6. Draw the monsterImage onto the drawingSurface
+  //drawingSurface.drawImage(monsterImage, 20, 20);
+  drawingSurface.drawImage
+  (
+    monsterImage, 
+    0, 0, 64, 64,
+    0, 0, 64, 64
+  );
+  
+  //Draw the monster's left eye
+  /*
+  drawingSurface.drawImage
+  (
+    monsterImage, 
+    3, 12, 28, 28,
+    0, 0, 28, 28
+  );
+  */
+  
+  //Center the eye
+  /*
+  drawingSurface.drawImage
+  (
+    monsterImage, 
+    3, 12, 28, 28,
+    18, 18, 28, 28
+  );
+  */
+  
+  /*
+  //Make the eye fill the whole canvas
+  drawingSurface.drawImage
+  (
+    monsterImage, 
+    3, 12, 28, 28,
+    0, 0, 64, 64
+  );
+  */
+  
+  //Make the destination image a quarter of the size and position
+  //it at the bottom left corner
+  /*
+  drawingSurface.drawImage
+  (
+    monsterImage, 
+    0, 0, 64, 64,
+    32, 32, 32, 32
+  );
+  */
+}
+
+</script>
+

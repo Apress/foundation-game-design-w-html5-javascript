@@ -1,0 +1,267 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width = device-width, initial-scale = 1.0, user-scalable = no">
+<title>Canvas drag and drop</title>
+
+<style>
+*
+{
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+</style>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  visible: true,
+  
+  //A draggable property
+  draggable: true,
+  
+  //Getters to define the
+  //left, right, top and bottom sides
+  left: function()
+  {
+    return this.x;
+  },
+  right: function()
+  {
+    return this.x + this.width;
+  },
+  top: function()
+  {
+    return this.y;
+  },
+  bottom: function()
+  {
+    return this.y + this.height;
+  },
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas and its drawing surface
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//Object arrays
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//Create the sprites
+var cat = Object.create(spriteObject);
+cat.x = canvas.width / 2 - cat.halfWidth();
+cat.y = canvas.height / 2 - cat.halfHeight();
+sprites.push(cat);
+
+var tiger = Object.create(spriteObject);
+tiger.sourceX = 64;
+tiger.x = 100;
+tiger.y = 100;
+sprites.push(tiger);
+
+var hedgehog = Object.create(spriteObject);
+hedgehog.sourceX = 128;
+hedgehog.x = 375;
+hedgehog.y = 250;
+sprites.push(hedgehog);
+
+//Load the image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "dragAndDrop.png";
+assetsToLoad.push(image);
+
+
+//Variables to store the touch point's position and velocity
+var touchX = 0;
+var touchY = 0;
+var oldTouchX = 0;
+var oldTouchY = 0;
+
+//A variable to store the current sprite being dragged
+var dragSprite = null;
+
+//Add event listeners
+canvas.addEventListener("touchmove", touchmoveHandler, false);
+canvas.addEventListener("touchstart", touchstartHandler, false);
+canvas.addEventListener("touchend", touchendHandler, false);
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function playGame()
+{
+  //Add game logic here
+}
+
+function touchstartHandler(event)
+{ 
+  //Find the touch point's x and y position on the canvas
+  touchX = event.touches[0].pageX - canvas.offsetLeft;
+  touchY = event.touches[0].pageY - canvas.offsetTop; 
+  
+  //Loop through all the sprites and find out if
+  //the touch point is over any of them
+  for(var i = sprites.length - 1; i > -1; i--)
+  {
+    sprite = sprites[i];
+    
+    if(hitTestPoint(touchX, touchY, sprite)
+    && sprite.draggable)
+    {
+      //Assign the sprite to the dragSprite variable
+      dragSprite = sprite;
+      
+      //push the dragSprite to the end of the sprites
+      //array so that it's displayed last
+      sprites.push(dragSprite);
+      
+      //Splice the dragSprite from its previous
+      //position in the sprites array
+      sprites.splice(i, 1);
+      break;
+    }
+  }
+  
+  //Capture the current touch point position to use
+  //in the next frame
+  oldTouchX = touchX;
+  oldTouchY = touchY;
+  event.preventDefault();
+}
+
+function touchmoveHandler(event)
+{ 
+  //Find the touch point's x and y position on the canvas
+  touchX = event.touches[0].pageX - canvas.offsetLeft;
+  touchY = event.touches[0].pageY - canvas.offsetTop; 
+      
+  //Move the dragSprite if it's not null
+  if(dragSprite !== null)
+  {
+    
+    dragSprite.x = touchX - (oldTouchX - dragSprite.x);
+    dragSprite.y = touchY - (oldTouchY - dragSprite.y);
+    
+    /*
+    //Use this to drag the sprite from the center
+    dragSprite.x = touchX - (dragSprite.width / 2);
+    dragSprite.y = touchY - (dragSprite.height / 2);
+    */
+  }
+  
+  //Capture the current touch point position to use
+  //in the next frame
+  oldTouchX = touchX;
+  oldTouchY = touchY;
+  
+  event.preventDefault();
+}
+
+function touchendHandler(event)
+{
+  //Release the dragSprite by setting it to null
+  dragSprite = null;
+  event.preventDefault();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function hitTestPoint(pointX, pointY, sprite)
+{  
+  return pointX > sprite.left() && pointX < sprite.right()
+  && pointY > sprite.top() && pointY < sprite.bottom();
+}
+
+function render(event)
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

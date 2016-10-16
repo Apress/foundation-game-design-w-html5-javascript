@@ -1,0 +1,170 @@
+<!doctype html>
+<title>The Forest of Lyrica - 4</title>
+
+<img src="" width="300" height="267">
+<p id="output"></p>
+<input id="input" type="text" placeholder="Enter your action…"> 
+<button>enter</button>
+
+<script>
+
+//Create the map
+var map = [];
+
+map[0] = "An old stone keep.";
+map[1] = "A deep well.";
+map[2] = "A sunny glade.";
+map[3] = "A sleeping dragon.";
+map[4] = "A narrow pathway.";
+map[5] = "An ancient gate.";
+map[6] = "The edge of a river.";
+map[7] = "A lonely wooden bench.";
+map[8] = "An isolated cottage. Faint music comes from inside.";
+
+//Set the player's start location
+var mapLocation = 4;
+
+//Set the images
+var images = [];
+
+images[0] = "keep.png";
+images[1] = "well.png";
+images[2] = "glade.png";
+images[3] = "dragon.png";
+images[4] = "path.png";
+images[5] = "gate.png";
+images[6] = "river.png";
+images[7] = "bench.png";
+images[8] = "cottage.png";
+
+//Set the blocked path messages
+var blockedPathMessages = [];
+
+blockedPathMessages[0] = "It's too dangerous to move that way.";
+blockedPathMessages[1] = "A mysterious force holds you back.";
+blockedPathMessages[2] = "A tangle of thorns blocks your way.";
+blockedPathMessages[3] = "You can't step over the dragon.";
+blockedPathMessages[4] = "";
+blockedPathMessages[5] = "The gate locks shut.";
+blockedPathMessages[6] = "The river is too deep to cross.";
+blockedPathMessages[7] = "The trees are too thick to pass.";
+blockedPathMessages[8] = "You're too scared to go that way.";
+
+//Initialize the player's input
+var playersInput = "";
+
+//Initialize the gameMessage
+var gameMessage = "";
+
+//Create an array of actions the game understands
+//and a variable to store the current action
+var actionsIKnow = ["north", "east", "south", "west"];
+var action = "";
+
+//The img element
+var image = document.querySelector("img");
+
+//The input and output fields
+var output = document.querySelector("#output");
+var input = document.querySelector("#input");
+
+//The button
+var button = document.querySelector("button");
+button.style.cursor = "pointer";
+button.addEventListener("click", clickHandler, false);
+
+//Dispay the player's location
+render();
+
+function clickHandler()
+{
+  playGame();
+}
+
+function playGame()
+{
+  //Get the player's input and convert it to lowercase
+  playersInput = input.value;
+  playersInput = playersInput.toLowerCase();
+  
+  //Reset these variables from the previous turn
+  gameMessage = "";
+  action = "";
+  
+  //Figure out the player's action
+  for(i = 0; i < actionsIKnow.length; i++)
+  {
+    if(playersInput.indexOf(actionsIKnow[i]) !== -1)
+    {
+      action = actionsIKnow[i];
+      console.log("player's action: " + action);
+      break;
+    }
+  }
+  
+  //Choose the correct action
+  switch(action)
+  {
+    case "north":
+      if(mapLocation >= 3)
+      {
+        mapLocation -= 3;
+      }
+      else
+      {
+        gameMessage = blockedPathMessages[mapLocation];
+      }
+      break;
+    
+    case "east":
+	    if(mapLocation % 3 != 2)
+      {
+        mapLocation += 1;
+      }
+      else
+      {
+        gameMessage = blockedPathMessages[mapLocation];
+      }
+      break;
+      
+    case "south":
+      if(mapLocation < 6)
+      {
+        mapLocation += 3;
+      }
+      else
+      {
+        gameMessage = blockedPathMessages[mapLocation];
+      }
+      break;
+      
+    case "west":
+      if(mapLocation % 3 != 0)
+      {
+        mapLocation -= 1;
+      }
+      else
+      {
+        gameMessage = blockedPathMessages[mapLocation];
+      }
+      break;
+    		  
+		default:
+		  gameMessage = "I don't understand that.";
+  }
+  
+  //Render the game
+  render();
+}
+
+function render()
+{
+  //Render the location
+  output.innerHTML = map[mapLocation];
+  image.src = "../images/" + images[mapLocation];
+  
+  //Display the game message
+  output.innerHTML += "<br><em>" + gameMessage + "</em>";
+}
+
+</script>

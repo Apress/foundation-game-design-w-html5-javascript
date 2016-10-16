@@ -1,0 +1,329 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width = device-width, initial-scale = 1.0, user-scalable = no">
+<title>Button Fairy</title>
+
+<style type="text/css">
+button
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	color: #fff;
+	padding: 10px 20px;
+	border: 2px solid #000;
+	cursor: none;
+	
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;	
+	
+	background:-webkit-linear-gradient(top, #a3a3a3, #000);
+	background:-moz-linear-gradient(top, #a3a3a3, #000);
+	background: linear-gradient(top, #a3a3a3, #000);
+	
+	-webkit-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	-moz-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	
+	-webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+    
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+}
+
+button:active
+{
+  background: -webkit-linear-gradient(top, #858565, #c5c9a9);
+  background: -moz-linear-gradient(top, #858565, #c5c9a9);
+  background: linear-gradient(top, #858565, #c5c9a9);
+}
+
+#stage
+{
+  width: 550px;
+  height: 400px;
+  position: relative; 
+}
+
+canvas
+{
+  position: absolute; 
+}
+</style>
+
+<div id="stage">
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+<button id="shootButton">Shoot!</button>
+</div>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+  bounce: -0.7,
+  gravity: 0.3,
+    
+  //Platform game properties   
+  isOnGround: undefined,
+  jumpForce: -10,
+
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//The button
+var shootButton = document.querySelector("#shootButton");
+
+//Object arrays
+var stars = [];
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The touch point
+var touchX = undefined;
+var touchY = undefined;
+
+//The fairy
+var fairy = Object.create(spriteObject);
+fairy.sourceWidth = 77;
+fairy.width = 77;
+fairy.x = canvas.width / 2 - fairy.halfWidth();
+fairy.y = canvas.height / 2 - fairy.halfHeight();
+sprites.push(fairy);
+
+//The touch point
+var touchX = fairy.x + fairy.halfWidth();
+var touchY = fairy.y + fairy.halfHeight();
+
+//The wand
+var wand = Object.create(spriteObject);
+wand.sourceX = 128;
+wand.sourceWidth = 20;
+wand.sourceHeight = 20;
+wand.width = 20;
+wand.height = 20;
+wand.x = fairy.centerX() - 55;
+wand.y = fairy.centerY() - 55;
+sprites.push(wand);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/buttonFairy.png";
+assetsToLoad.push(image);
+
+//Add listeners
+canvas.addEventListener("touchmove", touchmoveHandler, false);
+shootButton.addEventListener("touchstart", touchstartHandler, false);
+
+//The easing constant
+EASING = 0.1;
+
+//The angle between the touch point and the center of the fairy
+var angle = 0;
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function touchmoveHandler(event)
+{ 
+  //Find the touch point's x and y position.
+  //Subtract the canvas's top and left offset
+  touchX = event.targetTouches[0].pageX - canvas.offsetLeft;
+  touchY = event.targetTouches[0].pageY - canvas.offsetTop;
+  event.preventDefault();
+}
+
+function touchstartHandler(event)
+{ 
+  event.preventDefault();
+  
+  //Create a star sprite
+  var star = Object.create(spriteObject);
+  star.sourceX = 192;
+  star.sourceWidth = 38;
+  star.sourceHeight = 38;
+  star.width = 38;
+  star.height = 38;
+  
+  //Center it over the wand
+  star.x = wand.centerX() - star.halfWidth();
+  star.y = wand.centerY() - star.halfHeight();
+  
+  //Set its speed
+  star.vx = Math.cos(angle) * 7;
+  star.vy = Math.sin(angle) * 7;
+
+  //Push the star into both the sprites and stars arrays
+  sprites.push(star);
+  stars.push(star);
+
+}
+
+function playGame()
+{ 
+
+  //Find the angle between the center of the fairy and the touch
+  angle = Math.atan2(touchY - fairy.centerY(), touchX - fairy.centerX());
+	
+  //Move the wand around the fairy
+  var radius = 64;
+  wand.x = fairy.centerX() + (radius * Math.cos(angle)) - wand.halfWidth();
+  wand.y = fairy.centerY() + (radius * Math.sin(angle)) - wand.halfHeight();
+
+  //Figure out the distance between the touch point and the center of the fairy
+  var vx = touchX - fairy.centerX(); 
+  var vy = touchY - fairy.centerY();  
+  distance = Math.sqrt(vx * vx + vy * vy);
+  
+	//Move the fairy if it's more than 1 pixel away from the touch point 
+  if (distance >= 1)
+  {
+    fairy.x += vx * EASING; 
+    fairy.y += vy * EASING;
+  }
+  
+  //--- The stars
+  
+  //Move the stars
+  for(var i = 0; i < stars.length; i++)
+  {
+    var star = stars[i];
+    
+    //Move it    
+    star.x += star.vx;
+    star.y += star.vy;
+    
+    //Remove the star if it crosses the top of the screen
+    if (star.centerY() < 0
+    || star.centerX() < 0
+    || star.centerX() > canvas.width
+    || star.centerY() > canvas.height)
+    { 
+      //Remove the star from the stars array
+      removeObject(star, stars);
+ 
+      //Remove the star from the sprites array
+      removeObject(star, sprites);
+      
+      //Reduce the loop counter by 1 to compensate 
+      //for the removed element
+      i--;
+    }
+  }	
+}
+
+function removeObject(objectToRemove, array) 
+{ 
+  var i = array.indexOf(objectToRemove);
+  if (i !== -1)
+  {
+    array.splice(i, 1);
+  }
+} 
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	     var sprite = sprites[i];
+	     if(sprite.visible)
+	     {
+		     drawingSurface.drawImage
+		     (
+		       image, 
+		       sprite.sourceX, sprite.sourceY, 
+		       sprite.sourceWidth, sprite.sourceHeight,
+		       Math.floor(sprite.x), Math.floor(sprite.y), 
+		       sprite.width, sprite.height
+		     ); 
+	     }
+	  }
+  }
+}
+
+</script>

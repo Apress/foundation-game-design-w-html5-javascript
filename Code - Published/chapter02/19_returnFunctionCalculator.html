@@ -1,0 +1,40 @@
+<!doctype html>
+<title>Return function calculator</title>
+
+<script>
+
+var addition = add(12, 6);
+var subtraction = subtract(67, 45);
+var multiplication = multiply(34, 26);
+var division = divide(100, 5);
+
+console.log(addition);
+console.log(subtraction);
+console.log(multiplication);
+console.log(division);
+
+function add(firstNumber, secondNumber)
+{
+  var total = firstNumber + secondNumber;
+  return total; 
+}
+	
+function subtract(firstNumber, secondNumber)
+{
+  var difference = firstNumber - secondNumber;
+  return difference;
+}
+	
+function multiply(firstNumber, secondNumber)
+{
+  var product = firstNumber * secondNumber;
+  return product;
+}
+	
+function divide(firstNumber, secondNumber)
+{
+  var quotient = firstNumber / secondNumber;
+  return quotient;
+}
+
+</script>

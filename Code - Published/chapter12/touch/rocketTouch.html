@@ -1,0 +1,362 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width = device-width, initial-scale = 1.0, user-scalable = no">
+<title>Rocket</title>
+<style type="text/css">
+
+button
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	color: #fff;
+	padding: 10px 20px;
+	border: 2px solid #000;
+	cursor: none;
+	
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;	
+	
+	background:-webkit-linear-gradient(top, #a3a3a3, #000);
+	background:-moz-linear-gradient(top, #a3a3a3, #000);
+	background: linear-gradient(top, #a3a3a3, #000);
+	
+	-webkit-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	-moz-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	
+	-webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+    
+  position: absolute;
+  
+}
+
+button:active
+{
+  background: -webkit-linear-gradient(top, #858565, #c5c9a9);
+  background: -moz-linear-gradient(top, #858565, #c5c9a9);
+  background: linear-gradient(top, #858565, #c5c9a9);
+}
+
+#goButton
+{
+  left: 20px;
+  bottom: 20px;
+}
+
+#shootButton
+{
+  left: 20px;
+  bottom: 80px;
+}
+
+#stage
+{
+  width: 550px;
+  height: 400px;
+  position: relative; 
+}
+
+canvas
+{
+  position: absolute; 
+}
+
+</style>
+<div id="stage">
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+<button id="goButton">Go!</button>
+<button id="shootButton">Shoot!</button>
+</div>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script type="text/javascript">
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  width: 64,
+  height: 64,
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  visible: true,
+  rotation: 0,
+  
+  //Physics properties
+  accelerationX: 0, 
+  accelerationY: 0,
+  speed: 0, 
+  speedLimit: 5, 
+  friction: 0.96,
+    
+  //Getters
+  centerX: function()
+  {
+    return this.x + (this.width / 2);
+  },
+  centerY: function()
+  {
+    return this.y + (this.height / 2);
+  },
+  halfWidth: function()
+  {
+    return this.width / 2;
+  },
+  halfHeight: function()
+  {
+    return this.height / 2;
+  }
+};
+
+//--- The main program
+
+//The canvas
+var canvas = document.querySelector("canvas"); 
+var drawingSurface = canvas.getContext("2d");
+
+//The buttons
+var goButton = document.querySelector("#goButton");
+var shootButton = document.querySelector("#shootButton");
+
+//Object arrays
+var bullets = [];
+var sprites = [];
+var assetsToLoad = [];
+var assetsLoaded = 0;
+
+//The touch
+var touchX = 0;
+var touchY = 0;
+
+//The rocket
+var rocket = Object.create(spriteObject);
+rocket.x = canvas.width / 2 - rocket.halfWidth();
+rocket.y = canvas.height / 2 - rocket.halfHeight();
+sprites.push(rocket);
+
+//Load the tilesheet image
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "../images/vehicles.png";
+assetsToLoad.push(image);
+
+//Add listeners
+canvas.addEventListener("touchmove", touchmoveHandler, false);
+goButton.addEventListener("touchstart", touchstartGoButtonHandler, false);
+goButton.addEventListener("touchend", touchendGoButtonHandler, false);
+shootButton.addEventListener("touchstart", touchstartShootButtonHandler, false);
+
+//The angle between the touch and the center of the rocket
+var angle = 0;
+
+//Game states
+var LOADING = 0;
+var PLAYING = 1;
+var gameState = LOADING;
+
+update();
+
+function touchmoveHandler(event)
+{
+  touchX = event.targetTouches[0].pageX - canvas.offsetLeft;
+  touchY = event.targetTouches[0].pageY - canvas.offsetTop;
+  event.preventDefault();  
+}
+
+function touchstartGoButtonHandler(event)
+{
+  rocket.speed = 0.2;
+  rocket.friction = 1;
+  event.preventDefault();
+}
+
+function touchendGoButtonHandler(event)
+{
+  rocket.speed = 0;
+  rocket.friction = 0.96;
+  event.preventDefault();
+}
+
+function touchstartShootButtonHandler(event)
+{ 
+  //Create a bullet sprite
+  var bullet = Object.create(spriteObject);
+  bullet.sourceX = 256;
+  bullet.sourceWidth = 10;
+  bullet.sourceHeight = 10;
+  bullet.width = 10;
+  bullet.height = 10;
+  
+  //Center it over the rocket
+  var radius = 32;
+	bullet.x 
+	  = rocket.centerX() - bullet.halfWidth()
+	  + (radius * Math.cos(angle));
+	  
+	bullet.y 
+	  = rocket.centerY() - bullet.halfHeight()
+	  + (radius * Math.sin(angle));
+  
+  //Set its speed
+  bullet.vx = Math.cos(angle) * 7;
+  bullet.vy = Math.sin(angle) * 7;
+
+  //Push the bullet into both the sprites and bullets arrays
+  sprites.push(bullet);
+  bullets.push(bullet);
+  
+  event.preventDefault();
+}
+
+function playGame()
+{ 
+  //Find the angle between the center of the rocket and the touch point
+  angle = Math.atan2(touchY - rocket.centerY(), touchX - rocket.centerX());
+    
+  //Figure out the acceleration based on the angle
+  rocket.accelerationX = Math.cos(angle) * rocket.speed; 
+  rocket.accelerationY = Math.sin(angle) * rocket.speed;
+    
+  //Add the acceleration to the velocity
+	rocket.vx += rocket.accelerationX; 
+	rocket.vy += rocket.accelerationY;
+	  
+	//Convert the angle's radians into rotation degrees
+	rocket.rotation = angle * (180 / Math.PI);
+    
+  //Add friction
+  rocket.vx *= rocket.friction;
+  rocket.vy *= rocket.friction;
+				
+  //Move the rocket
+  rocket.x += rocket.vx;
+  rocket.y += rocket.vy;
+  
+  //Move the touch point ahead of the rocket. This is important because if you
+  //release your finger from the screen the touch point positions will remain
+  //fixed at their last position. These two lines keep them ahead of the rocket,
+  //so that the rocket chases them.
+  touchX += rocket.vx;
+	touchY += rocket.vy;
+  
+  //--- The bullets
+  
+  //Move the bullets
+  for(var i = 0; i < bullets.length; i++)
+  {
+    var bullet = bullets[i];
+    
+    //Move it    
+    bullet.x += bullet.vx;
+    bullet.y += bullet.vy;
+    
+    //Remove the bullet if it crosses the top of the screen
+    if (bullet.centerY() < 0
+    || bullet.centerX() < 0
+    || bullet.centerX() > canvas.width
+    || bullet.centerY() > canvas.height)
+    { 
+      //Remove the bullet from the bullets array
+      removeObject(bullet, bullets);
+ 
+      //Remove the bullet from the sprites array
+      removeObject(bullet, sprites);
+      
+      //Reduce the loop counter by 1 to compensate 
+      //for the removed element
+      i--;
+    }
+  }	
+}
+
+function removeObject(objectToRemove, array) 
+{ 
+  var i = array.indexOf(objectToRemove);
+  if (i !== -1)
+  {
+    array.splice(i, 1);
+  }
+} 
+
+function update()
+{ 
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Change what the game is doing based on the game state
+  switch(gameState)
+  {
+    case LOADING:
+      console.log("loading...");
+      break;
+    
+    case PLAYING:
+      playGame();
+      break;
+  }
+  
+  //Render the game
+  render();
+}
+
+function loadHandler()
+{ 
+  assetsLoaded++;
+  if(assetsLoaded === assetsToLoad.length)
+  {
+    gameState = PLAYING;
+  }
+}
+
+function render()
+{ 
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+	  for(var i = 0; i < sprites.length; i++)
+	  {
+	    var sprite = sprites[i];
+	     
+	    //Save the current state of the drawing surface
+	    //before it's rotated
+	    drawingSurface.save();
+	  
+      //Rotate the canvas
+    	drawingSurface.translate
+    	(
+    	  Math.floor(sprite.x + sprite.halfWidth()), 
+    	  Math.floor(sprite.y + sprite.halfHeight())
+    	);
+	    drawingSurface.rotate(sprite.rotation * Math.PI / 180);
+    
+	    if(sprite.visible)
+	    {
+		    drawingSurface.drawImage
+		    (
+		      image, 
+		      sprite.sourceX, sprite.sourceY, 
+		      sprite.sourceWidth, sprite.sourceHeight,
+		      Math.floor(-sprite.halfWidth()), Math.floor(-sprite.halfHeight()), 
+		      sprite.width, sprite.height
+		     );
+	    }
+	     
+      //Restore the drawing surface to its 
+      //state before it was rotated
+      drawingSurface.restore();
+	  }
+  }
+}
+
+</script>

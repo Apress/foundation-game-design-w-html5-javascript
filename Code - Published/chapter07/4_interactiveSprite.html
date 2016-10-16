@@ -1,0 +1,192 @@
+<!doctype html>
+<title>Interactive sprite</title>
+
+<button id="up">up</button>
+<button id="down">down</button>
+<button id="right">right</button>
+<button id="left">left</button>
+<button id="hide">hide</button>
+<button id="show">show</button>
+<button id="bigger">bigger</button>
+<button id="smaller">smaller</button>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script>
+
+//--- The sprite object
+
+var spriteObject =
+{
+  //The x and y source position of the image
+  //And its height and width
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  
+  //The x and y position of the sprite on the canvas
+  //as well as its height
+  x: 0,
+  y: 0,
+  width: 64,
+  height: 64,
+  
+  //A property to tell us if the sprite is visible
+  visible: true
+};
+
+//--- The main program
+
+//the canvas and its drawing surfave
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+//An array to store the game sprites
+var sprites = [];
+
+//Create the cat sprite, center it
+//and add it to the sprites array
+var cat = Object.create(spriteObject);
+cat.x = 243;
+cat.y = 168;
+sprites.push(cat);
+
+//Load the cat's image 
+var image = new Image();
+image.addEventListener("load", loadHandler, false);
+image.src = "cat.png";
+
+//Add event listeners to the buttons
+
+//Up button
+var up = document.querySelector("#up");
+up.addEventListener("mousedown", upHandler, false);
+
+//Down button
+var up = document.querySelector("#down");
+down.addEventListener("mousedown", downHandler, false);
+
+//Right button
+var right = document.querySelector("#right");
+right.addEventListener("mousedown", rightHandler, false);
+
+//Left button
+var left = document.querySelector("#left");
+left.addEventListener("mousedown", leftHandler, false);
+
+//Hide button
+var hide = document.querySelector("#hide");
+hide.addEventListener("mousedown", hideHandler, false);
+
+//Show button
+var hide = document.querySelector("#show");
+show.addEventListener("mousedown", showHandler, false);
+
+//Bigger button
+var bigger = document.querySelector("#bigger");
+bigger.addEventListener("mousedown", biggerHandler, false);
+
+//Smaller button
+var smaller = document.querySelector("#smaller");
+smaller.addEventListener("mousedown", smallerHandler, false);
+
+function loadHandler()
+{
+  //Run the update animation loop when the image has loaded
+  update();
+}
+
+function update()
+{
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Render the sprite
+  render();
+}
+
+//The button eventHandlers
+
+//Up
+function upHandler(event)
+{
+  cat.y -= 10;
+}
+
+//Down
+function downHandler(event)
+{
+  cat.y += 10;
+}
+
+//Right
+function rightHandler(event)
+{
+  cat.x += 10;
+}
+
+//Left
+function leftHandler(event)
+{
+  cat.x -= 10;
+}
+
+//Hide
+function hideHandler(event)
+{
+  cat.visible = false;
+}
+
+//Show
+function showHandler(event)
+{
+  cat.visible = true;
+}
+
+//Bigger
+function biggerHandler(event)
+{
+  cat.height += 10;
+  cat.width += 10;
+  cat.x -= 5;
+  cat.y -= 5;
+}
+
+//Smaller
+function smallerHandler(event)
+{
+  cat.height -= 10;
+  cat.width -= 10;
+  cat.x += 5;
+  cat.y += 5;
+}
+
+function render(event)
+{ 
+  //Clear the previous animation frame
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Display the sprites
+  if(sprites.length !== 0)
+  {
+  	for(var i = 0; i < sprites.length; i++)
+  	{
+  	  var sprite = sprites[i];
+  	  if(sprite.visible)
+  	  {
+  		  drawingSurface.drawImage
+  		  (
+  		    image, 
+  		    sprite.sourceX, sprite.sourceY, 
+  		    sprite.sourceWidth, sprite.sourceHeight,
+  		    Math.floor(sprite.x), Math.floor(sprite.y), 
+  		    sprite.width, sprite.height
+  		  ); 
+  	  }
+  	}
+  }
+}
+
+</script>

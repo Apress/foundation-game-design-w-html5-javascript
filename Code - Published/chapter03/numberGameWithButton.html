@@ -1,0 +1,170 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Number guessing game with button</title>
+
+<style>
+
+button
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	color: #fff;
+	padding: 10px 20px;
+	border: 2px solid #000;
+	cursor: pointer;
+	
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;	
+	
+	background:-webkit-linear-gradient(top, #a3a3a3, #000);
+	background:-moz-linear-gradient(top, #a3a3a3, #000);
+	background: linear-gradient(top, #a3a3a3, #000);
+	
+	-webkit-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	-moz-box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	box-shadow: 5px 5px 3px rgba(0,0,0,0.5);
+	
+	-webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+button:hover
+{
+  background: -webkit-linear-gradient(top, #acc7a3, #506651);
+  background: -moz-linear-gradient(top, #acc7a3, #506651);
+  background: linear-gradient(top, #acc7a3, #506651);
+}
+
+button:active
+{
+  background: -webkit-linear-gradient(top, #858565, #c5c9a9);
+  background: -moz-linear-gradient(top, #858565, #c5c9a9);
+  background: linear-gradient(top, #858565, #c5c9a9);
+}
+
+</style>
+
+<p id="output">I am thinking of a number between 0 and 99.</p>
+<input id="input" type="text" placeholder="Enter your guess…" autofocus> 
+<button>guess</button>
+	
+<script type="text/javascript">
+
+//Game variables
+var mysteryNumber = Math.floor(Math.random() * 100);
+var playersGuess = 0;
+console.log(mysteryNumber);
+
+var guessesRemaining = 10;
+var guessesMade = 0;
+var gameState = "";
+var gameWon = false;
+
+//The input and output fields
+var input = document.querySelector("#input");
+var output = document.querySelector("#output");
+
+//The button
+var button = document.querySelector("button");
+button.style.cursor = "pointer";
+button.addEventListener("click", clickHandler, false);
+
+//Listen for enter key presses
+window.addEventListener("keydown", keydownHandler, false);
+
+function keydownHandler(event)
+{
+  if(event.keyCode === 13)
+  {
+    validateInput();
+  }
+}
+
+function clickHandler()
+{
+  validateInput(); 
+}
+
+function validateInput()
+{
+  playersGuess = parseInt(input.value);
+  
+  //If you're worried about infinity, use this:
+  //!isNaN(playersGuess) && isFinite(playersGuess);
+  if(isNaN(playersGuess))
+  {
+    output.innerHTML = "Please enter a number.";
+  }
+  else
+  {
+    playGame();
+  }
+}
+
+function playGame()
+{
+  guessesRemaining = guessesRemaining - 1;
+  guessesMade = guessesMade + 1;
+  gameState 
+    = " Guess: " + guessesMade 
+    + ", Remaining: " + guessesRemaining;
+  
+  playersGuess = parseInt(input.value);
+
+  if(playersGuess > mysteryNumber)
+  {
+    output.innerHTML = "That's too high." + gameState;
+    
+    //Check for the end of the game
+    if (guessesRemaining < 1)
+    {
+      endGame();
+    }
+  }
+  else if(playersGuess < mysteryNumber)
+  {
+    output.innerHTML = "That's too low." + gameState;
+    
+    //Check for the end of the game
+    if (guessesRemaining < 1)
+    {
+      endGame();
+    }
+  }
+  else if(playersGuess === mysteryNumber)
+  {
+    gameWon = true;
+    endGame();
+  }
+}
+
+function endGame()
+{
+  if (gameWon)
+  {
+    output.innerHTML
+      = "Yes, it's " + mysteryNumber + "!" + "<br>" 
+      + "It only took you " + guessesMade + " guesses.";
+  }
+  else
+  {
+    output.innerHTML
+      = "No more guesses left!" + "<br>" 
+      + "The number was: " + mysteryNumber + ".";
+  }
+  
+  //Disable the button
+  button.removeEventListener("click", clickHandler, false);
+  button.disabled = true;
+  
+  //Disable the enter key
+  window.removeEventListener("keydown", keydownHandler, false);
+  
+  //Disable the input field
+  input.disabled = true;
+}
+
+	
+</script>

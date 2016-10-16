@@ -1,0 +1,174 @@
+<!doctype html>
+<title>Touch control</title>
+
+<style>
+
+/*
+Offset the canvas by 50 pixels to test
+Whether this code can find the correct mouse
+position on the canvas
+*/
+
+canvas
+{
+  margin-left: 50px;
+  margin-top: 50px;
+}
+
+</style>
+
+<canvas width="550" height="400" style="border: 1px dashed black"></canvas>
+<p id="output"></p>
+
+<script src="requestAnimationFramePolyfill.js"></script>
+<script>
+
+//--- The sprite object
+
+var spriteObject =
+{
+  sourceX: 0,
+  sourceY: 0,
+  sourceWidth: 64,
+  sourceHeight: 64,
+  x: 0,
+  y: 0,
+  height: 64,
+  width: 64,
+  vx: 0,
+  vy: 0
+};
+
+//--- The main program
+
+//The canvas and its drawing surface
+var canvas = document.querySelector("canvas");
+var drawingSurface = canvas.getContext("2d");
+
+var output = document.querySelector("#output");
+
+//An array to store the sprites
+var sprites = [];
+
+//Create the cat sprite and center it
+var cat = Object.create(spriteObject);
+cat.x = 243;
+cat.y = 168;
+sprites.push(cat);
+
+//Load the image
+var image = new Image();
+image.src = "cat.png";
+image.addEventListener("load", loadHandler, false);
+
+//Add a mouse listener
+canvas.addEventListener("touchstart", touchstartHandler, false);
+window.addEventListener("touchend", touchendHandler, false);
+
+function touchstartHandler(event)
+{ 
+  //Find the touch point's x and y position
+  var touchX = event.pageX - canvas.offsetLeft;
+  var touchY = event.pageY - canvas.offsetTop;
+  
+  //display the touch point's x and y positions in the output
+  output.innerHTML = touchX;  
+  output.innerHTML += ", " + touchY;  
+  
+  //Define the cat's 4 sides
+  var left = cat.x;
+  var right = cat.x + cat.width;
+  var top = cat.y;
+  var bottom = cat.y + cat.height;
+  
+  //Change the velocity based on the touch point's relative position to the cat
+  if(touchX < left)
+  {
+    cat.vx -= 5;
+  }
+  if(touchX > right)
+  {
+    cat.vx += 5;
+  }
+  if(touchY < top)
+  {
+    cat.vy -= 5;
+  }
+  if(touchY > bottom)
+  {
+    cat.vy += 5;
+  }
+  
+  //Prevent the canvas from being selected
+  event.preventDefault();
+}
+
+function touchendHandler(event)
+{ 
+  cat.vx = 0; 
+  cat.vy = 0;
+  
+  event.preventDefault();
+}
+
+function loadHandler()
+{ 
+  update();
+}
+
+function update()
+{
+  //The animation loop
+  requestAnimationFrame(update, canvas);
+  
+  //Move the cat
+  cat.x += cat.vx;
+  cat.y += cat.vy;
+  
+  //Stop the cat at the canvas edges
+  if (cat.x < 0)
+  {
+    cat.x = 0;
+  }
+  if (cat.y < 0)
+  {
+    cat.y = 0;
+  }
+  if (cat.x + cat.width > canvas.width)
+  {
+    cat.x = canvas.width - cat.width;
+  }
+  if (cat.y + cat.height > canvas.height)
+  {
+    cat.y = canvas.height - cat.height;
+  }
+  
+  //Render the sprite
+  render();
+}
+
+function render()
+{ 
+  //Clear the previous animation frame
+  drawingSurface.clearRect(0, 0, canvas.width, canvas.height);
+  
+  //Loop through all the sprites and use 
+  //their properties to display them
+  if(sprites.length !== 0)
+  {
+    for(var i = 0; i < sprites.length; i++)
+    {
+      var sprite = sprites[i];
+      drawingSurface.drawImage
+      (
+        image, 
+        sprite.sourceX, sprite.sourceY, 
+        sprite.sourceWidth, sprite.sourceHeight,
+        Math.floor(sprite.x), Math.floor(sprite.y), 
+        sprite.width, sprite.height
+      ); 
+    }
+  }
+}
+
+</script>

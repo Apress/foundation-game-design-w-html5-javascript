@@ -1,0 +1,57 @@
+<!doctype html>
+<title>Robot</title>
+
+<script>
+
+var robot = 
+{
+  material: "titanium", 
+  happy: true,
+  
+  makeBreakfast: function()
+  {
+    if(this.happy)
+    {
+      console.log("Here are your waffles and milk, master."); 
+    }
+    else
+    {
+      console.log("Here's your burnt toast and lukewarm water, master.");
+    }
+  }
+};
+
+//Command my robot to make breakfast
+robot.happy = false;
+robot.makeBreakfast();
+
+//Display the properties
+console.log(robot.material);
+console.log(robot.happy);
+
+//Change the properties
+robot.material = "plastic";
+robot.happy = false;
+
+console.log(robot.material);
+console.log(robot.happy);
+
+//Make more robots
+var newRobot = Object.create(robot);
+newRobot.material = "transparent aluminium";
+newRobot.makeBreakfast();
+console.log(newRobot.material);
+
+//Add a new property
+robot.color = "blue";
+console.log(robot.color);
+
+//Add a new method
+robot.enslaveHumanity = function()
+{
+  console.log("The robot starts uploading lots of cat videos in a suspicious manner.");
+}
+
+robot.enslaveHumanity();
+
+</script>
